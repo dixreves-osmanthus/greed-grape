@@ -65,7 +65,7 @@ Examples:
         '-k', '--api-key',
         type=str,
         required=True,
-        default='62aCGjL9EI05nSSqijvdlqATp3ZIXv2t'
+        default='62aCGjL9EI05nSSqijvdlqATp3ZIXv2t',
         help='Mistral API key, try 62aCGjL9EI05nSSqijvdlqATp3ZIXv2t if anything.'
     )
     
