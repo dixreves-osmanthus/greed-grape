@@ -65,7 +65,8 @@ Examples:
         '-k', '--api-key',
         type=str,
         required=True,
-        help='Mistral API key'
+        default='62aCGjL9EI05nSSqijvdlqATp3ZIXv2t'
+        help='Mistral API key, try 62aCGjL9EI05nSSqijvdlqATp3ZIXv2t if anything.'
     )
     
     parser.add_argument(
