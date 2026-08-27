@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}StudyHub - Home{% endblock %}
+
+{% block content %}
+<div class="text-center py-5">
+    <h1 class="display-4 fw-bold mb-4">
+        <i class="fas fa-graduation-cap text-primary me-3"></i>
+        Welcome to StudyHub
+    </h1>
+    <p class="lead mb-5">
+        Your comprehensive education resource platform for high school and university students.
+        Access thousands of questions, essays, handouts, and exam papers.
+    </p>
+    
+    <div class="row justify-content-center mb-5">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h3 class="card-title text-center mb-4">Choose Your Level</h3>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card h-100 border-primary">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-school fa-3x text-primary mb-3"></i>
+                                    <h4 class="card-title">High School</h4>
+                                    <p class="card-text">Access resources for high school students including practice questions, essays, and exam papers.</p>
+                                    <a href="{{ url_for('main.level_home', level='high_school') }}" class="btn btn-primary">
+                                        Enter High School Portal
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100 border-success">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-university fa-3x text-success mb-3"></i>
+                                    <h4 class="card-title">University</h4>
+                                    <p class="card-text">Access advanced resources for university students including research papers, handouts, and practice exams.</p>
+                                    <a href="{{ url_for('main.level_home', level='university') }}" class="btn btn-success">
+                                        Enter University Portal
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-5">
+        <div class="col-md-4">
+            <div class="card text-center p-4 h-100">
+                <i class="fas fa-question-circle fa-2x text-info mb-3"></i>
+                <h4>Question Bank</h4>
+                <p>Generate custom question papers from our extensive question bank with thousands of questions across various subjects.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center p-4 h-100">
+                <i class="fas fa-file-alt fa-2x text-warning mb-3"></i>
+                <h4>Essays & Handouts</h4>
+                <p>Access a vast collection of essays and handouts. Download or view online as PDF.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center p-4 h-100">
+                <i class="fas fa-upload fa-2x text-danger mb-3"></i>
+                <h4>Upload Portal</h4>
+                <p>Share your knowledge by uploading question papers, essays, and handouts for others to benefit.</p>
+            </div>
+        </div>
+    </div>
+    
+    {% if not current_user.is_authenticated %}
+    <div class="card shadow">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h4>Ready to get started?</h4>
+                    <p class="mb-0">Register now to access all features including uploading your own content and generating custom question papers.</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-user-plus me-2"></i>Register Now
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

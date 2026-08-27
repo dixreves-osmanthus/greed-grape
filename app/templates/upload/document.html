@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Document - StudyHub{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('main.level_home', level=level) }}">{{ level_name }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('upload.upload_center', level=level) }}">Upload Center</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Upload Document</li>
+        </ol>
+    </nav>
+    
+    <h1>
+        <i class="fas fa-file-upload text-warning me-3"></i>
+        Upload Document
+    </h1>
+    <p class="lead">Share your essays and handouts with the community.</p>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-body">
+                <form method="POST" action="" enctype="multipart/form-data" class="needs-validation" novalidate>
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-4">
+                        <h4>Document Information</h4>
+                        <hr>
+                        
+                        <div class="mb-3">
+                            {{ form.title.label(class="form-label") }}
+                            {{ form.title(class="form-control", placeholder="Enter document title") }}
+                            {% for error in form.title.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.description.label(class="form-label") }}
+                            {{ form.description(class="form-control", placeholder="Enter a brief description of the document", rows=4) }}
+                            {% for error in form.description.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {{ form.document_type.label(class="form-label") }}
+                                {{ form.document_type(class="form-select") }}
+                                {% for error in form.document_type.errors %}
+                                    <div class="text-danger small">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.category.label(class="form-label") }}
+                                {{ form.category(class="form-select") }}
+                                {% for error in form.category.errors %}
+                                    <div class="text-danger small">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h4>Upload File</h4>
+                        <hr>
+                        
+                        <div class="file-upload-area" id="fileUploadArea">
+                            <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
+                            <h5>Drag & Drop your file here or click to browse</h5>
+                            <p class="text-muted small mb-0">
+                                Supported formats: PDF, DOC, DOCX, TXT<br>
+                                Maximum file size: 16MB
+                            </p>
+                            {{ form.file(class="d-none", id="fileInput") }}
+                            {% for error in form.file.errors %}
+                                <div class="text-danger small mt-2">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div id="filePreview" class="d-none mt-3">
+                            <div class="alert alert-info">
+                                <i class="fas fa-file me-2"></i>
+                                <strong>Selected File:</strong> <span id="selectedFileName"></span>
+                                <button type="button" class="btn btn-sm btn-outline-danger ms-2" 
+                                        onclick="clearFileSelection()">
+                                    <i class="fas fa-trash me-1"></i>Remove
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-upload me-2"></i>Upload Document
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card shadow">
+            <div class="card-body">
+                <h4 class="card-title">
+                    <i class="fas fa-lightbulb text-warning me-2"></i>
+                    Upload Tips
+                </h4>
+                <hr>
+                <ul>
+                    <li>Ensure your document is well-organized and formatted</li>
+                    <li>Add a clear, descriptive title and description</li>
+                    <li>Select the appropriate category and type</li>
+                    <li>All uploads are reviewed before being made public</li>
+                    <li>You can view and manage your uploads in "My Uploads"</li>
+                </ul>
+                
+                <hr>
+                
+                <h5>Supported File Types</h5>
+                <div class="d-flex flex-wrap gap-2">
+                    <span class="badge bg-danger">.pdf</span>
+                    <span class="badge bg-primary">.doc</span>
+                    <span class="badge bg-primary">.docx</span>
+                    <span class="badge bg-secondary">.txt</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// File upload handling
+document.addEventListener('DOMContentLoaded', function() {
+    const fileUploadArea = document.getElementById('fileUploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const filePreview = document.getElementById('filePreview');
+    const selectedFileName = document.getElementById('selectedFileName');
+    
+    // Click to browse
+    fileUploadArea.addEventListener('click', function() {
+        fileInput.click();
+    });
+    
+    // Drag and drop
+    fileUploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        fileUploadArea.classList.add('dragover');
+    });
+    
+    fileUploadArea.addEventListener('dragleave', function() {
+        fileUploadArea.classList.remove('dragover');
+    });
+    
+    fileUploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        fileUploadArea.classList.remove('dragover');
+        
+        if (e.dataTransfer.files.length) {
+            fileInput.files = e.dataTransfer.files;
+            updateFilePreview();
+        }
+    });
+    
+    // File input change
+    fileInput.addEventListener('change', function() {
+        updateFilePreview();
+    });
+    
+    function updateFilePreview() {
+        if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            selectedFileName.textContent = file.name;
+            filePreview.classList.remove('d-none');
+        } else {
+            filePreview.classList.add('d-none');
+        }
+    }
+});
+
+// Clear file selection
+function clearFileSelection() {
+    const fileInput = document.getElementById('fileInput');
+    const filePreview = document.getElementById('filePreview');
+    
+    fileInput.value = '';
+    filePreview.classList.add('d-none');
+}
+</script>
+{% endblock %}

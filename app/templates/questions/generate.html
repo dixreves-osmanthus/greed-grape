@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Generate Question Paper - StudyHub{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('main.level_home', level=level) }}">{{ level_name }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('main.questions', level=level) }}">Questions</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Generate Paper</li>
+        </ol>
+    </nav>
+    
+    <h1>
+        <i class="fas fa-file-alt text-primary me-3"></i>
+        Generate Custom Question Paper
+    </h1>
+    <p class="lead">Create your own question paper from our extensive question bank.</p>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-body">
+                <form method="POST" action="" class="needs-validation" novalidate>
+                    <div class="mb-4">
+                        <h4>Paper Details</h4>
+                        <hr>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="title" class="form-label">Paper Title</label>
+                                <input type="text" name="title" id="title" 
+                                       class="form-control" 
+                                       placeholder="e.g., Midterm Exam - Mathematics"
+                                       value="{{ level_name }} Question Paper" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="subject" class="form-label">Subject</label>
+                                <select name="subject" id="subject" class="form-select" required>
+                                    <option value="General" selected>General</option>
+                                    {% for subject in subjects %}
+                                    <option value="{{ subject }}">{{ subject }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="num_questions" class="form-label">Number of Questions</label>
+                                <input type="number" name="num_questions" id="num_questions" 
+                                       class="form-control" min="1" max="100" value="10" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="difficulty" class="form-label">Difficulty</label>
+                                <select name="difficulty" id="difficulty" class="form-select">
+                                    <option value="">All Difficulties</option>
+                                    <option value="easy">Easy</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="hard">Hard</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">&nbsp;</label>
+                                <div class="form-check">
+                                    <input type="checkbox" name="include_answers" id="include_answers" 
+                                           class="form-check-input" checked>
+                                    <label for="include_answers" class="form-check-label">
+                                        Include Answer Key
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h4>Select Categories</h4>
+                        <hr>
+                        
+                        {% if categories %}
+                        <div class="row">
+                            {% for category in categories %}
+                            <div class="col-md-6 mb-2">
+                                <div class="form-check">
+                                    <input type="checkbox" name="categories" value="{{ category.id }}" 
+                                           id="category_{{ category.id }}" class="form-check-input">
+                                    <label for="category_{{ category.id }}" class="form-check-label">
+                                        <strong>{{ category.name }}</strong> - {{ category.subject }}
+                                        <br>
+                                        <small class="text-muted">{{ category.description|truncate(50) }}</small>
+                                    </label>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            No categories available. Please contact administrator.
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-paper-plane me-2"></i>Generate Question Paper
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card shadow">
+            <div class="card-body">
+                <h4 class="card-title">
+                    <i class="fas fa-info-circle text-info me-2"></i>
+                    How It Works
+                </h4>
+                <hr>
+                <ol>
+                    <li>Select the number of questions you want</li>
+                    <li>Choose specific categories or select all</li>
+                    <li>Optionally filter by difficulty level</li>
+                    <li>Click "Generate" to create your paper</li>
+                    <li>Preview and download as PDF</li>
+                </ol>
+                
+                <hr>
+                
+                <h5>Tips:</h5>
+                <ul class="small">
+                    <li>Select multiple categories for a comprehensive paper</li>
+                    <li>Include answer key for self-study</li>
+                    <li>Questions are randomly selected from the bank</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

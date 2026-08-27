@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block title %}Documents - {{ level_name }} - StudyHub{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('main.level_home', level=level) }}">{{ level_name }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Documents</li>
+        </ol>
+    </nav>
+    
+    <h1>
+        <i class="fas fa-file-alt text-warning me-3"></i>
+        {{ level_name }} Documents
+    </h1>
+    <p class="lead">Browse and download essays and handouts for {{ level_name }}.</p>
+</div>
+
+<!-- Search and Filter -->
+<div class="card shadow mb-4">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('main.documents', level=level) }}" class="row g-3">
+            <div class="col-md-3">
+                <label for="category" class="form-label">Category</label>
+                <select name="category" id="category" class="form-select">
+                    <option value="">All Categories</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}" {% if selected_category == category.id %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="type" class="form-label">Document Type</label>
+                <select name="type" id="type" class="form-select">
+                    <option value="">All Types</option>
+                    <option value="essay" {% if selected_type == 'essay' %}selected{% endif %}>Essay</option>
+                    <option value="handout" {% if selected_type == 'handout' %}selected{% endif %}>Handout</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="subject" class="form-label">Subject</label>
+                <select name="subject" id="subject" class="form-select">
+                    <option value="">All Subjects</option>
+                    {% for subject in subjects %}
+                    <option value="{{ subject }}" {% if selected_subject == subject %}selected{% endif %}>
+                        {{ subject }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="search" class="form-label">Search</label>
+                <input type="text" name="search" id="search" class="form-control" 
+                       placeholder="Search documents..." value="{{ search_query or '' }}">
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search me-2"></i>Search
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Documents Grid -->
+<div class="row">
+    {% if documents.items %}
+    {% for document in documents.items %}
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="badge bg-{{ 'primary' if document.file_type == 'essay' else 'warning' }}">
+                        {{ get_document_type_name(document.file_type) }}
+                    </span>
+                    {% if current_user.is_authenticated and current_user.is_admin %}
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary" type="button" 
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <a class="dropdown-item" 
+                                   href="{{ url_for('admin.edit_document', doc_id=document.id) if document.id else '#' }}">
+                                    <i class="fas fa-edit me-2"></i>Edit
+                                </a>
+                            </li>
+                            <li>
+                                <form action="" method="POST">
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i class="fas fa-trash me-2"></i>Delete
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <h5 class="card-title mb-2">
+                    <a href="{{ url_for('main.view_document', level=level, doc_id=document.id) }}" 
+                       class="text-decoration-none text-dark">
+                        {{ document.title|truncate(50) }}
+                    </a>
+                </h5>
+                
+                <p class="card-text text-muted small mb-3">
+                    {{ document.description|truncate(100) }}
+                </p>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="small text-muted">
+                        <i class="fas fa-folder me-1"></i>{{ document.doc_category.name }}<br>
+                        <i class="fas fa-book me-1"></i>{{ document.doc_category.subject }}
+                    </div>
+                    <div class="text-end">
+                        <small class="text-muted d-block">
+                            <i class="fas fa-download me-1"></i>{{ document.download_count }}
+                        </small>
+                        <small class="text-muted d-block">
+                            <i class="fas fa-eye me-1"></i>{{ document.view_count }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-white border-top-0">
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('main.download_document', level=level, doc_id=document.id) }}" 
+                       class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-download me-1"></i>Download
+                    </a>
+                    <a href="{{ url_for('main.view_document', level=level, doc_id=document.id) }}" 
+                       class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-eye me-1"></i>View
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    
+    <!-- Pagination -->
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if documents.has_prev %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('main.documents', level=level, page=documents.prev_num, category=selected_category, type=selected_type, subject=selected_subject, search=search_query) }}">
+                    Previous
+                </a>
+            </li>
+            {% endif %}
+            
+            {% for page_num in documents.iter_pages() %}
+                {% if page_num %}
+                <li class="page-item {% if page_num == documents.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('main.documents', level=level, page=page_num, category=selected_category, type=selected_type, subject=selected_subject, search=search_query) }}">
+                        {{ page_num }}
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if documents.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('main.documents', level=level, page=documents.next_num, category=selected_category, type=selected_type, subject=selected_subject, search=search_query) }}">
+                    Next
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    
+    {% else %}
+    <div class="col-12">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>No documents found matching your criteria.
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% if current_user.is_authenticated %}
+<div class="card shadow mt-4">
+    <div class="card-body text-center">
+        <h4>Contribute to the Community</h4>
+        <p class="mb-4">Share your essays and handouts to help other students.</p>
+        <a href="{{ url_for('upload.upload_document', level=level) }}" class="btn btn-primary btn-lg">
+            <i class="fas fa-upload me-2"></i>Upload Document
+        </a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

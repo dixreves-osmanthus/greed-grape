@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - StudyHub{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 text-center mb-4 mb-md-0">
+                        <div class="avatar-circle bg-primary text-white d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 120px; height: 120px; font-size: 3rem;">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <h3>{{ current_user.username }}</h3>
+                        <p class="text-muted">{{ current_user.email }}</p>
+                        <p class="mb-0">
+                            <span class="badge bg-{{ 'primary' if current_user.is_admin else 'secondary' }}">
+                                {{ 'Admin' if current_user.is_admin else 'User' }}
+                            </span>
+                        </p>
+                    </div>
+                    <div class="col-md-8">
+                        <h4>Account Information</h4>
+                        <hr>
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <strong>Username:</strong>
+                            </div>
+                            <div class="col-md-8">
+                                {{ current_user.username }}
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <strong>Email:</strong>
+                            </div>
+                            <div class="col-md-8">
+                                {{ current_user.email }}
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <strong>Account Type:</strong>
+                            </div>
+                            <div class="col-md-8">
+                                {{ 'Administrator' if current_user.is_admin else 'Regular User' }}
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <strong>Member Since:</strong>
+                            </div>
+                            <div class="col-md-8">
+                                {{ current_user.created_at.strftime('%B %d, %Y') }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card shadow mt-4">
+            <div class="card-body">
+                <h4>My Contributions</h4>
+                <hr>
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <h2>{{ current_user.questions|length }}</h2>
+                        <p class="text-muted">Questions Added</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h2>{{ current_user.documents|length }}</h2>
+                        <p class="text-muted">Documents Uploaded</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h2>{{ current_user.exampapers if current_user.exampapers else 0 }}</h2>
+                        <p class="text-muted">Exam Papers Uploaded</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card shadow mt-4">
+            <div class="card-body text-center">
+                <a href="{{ url_for('upload.my_uploads', level='high_school') }}" class="btn btn-primary me-2">
+                    <i class="fas fa-upload me-2"></i>View My Uploads
+                </a>
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-sign-out-alt me-2"></i>Logout
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

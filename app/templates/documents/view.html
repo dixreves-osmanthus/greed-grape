@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block title %}{{ document.title }} - StudyHub{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('main.level_home', level=level) }}">{{ level_name }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('main.documents', level=level) }}">Documents</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ document.title|truncate(30) }}</li>
+        </ol>
+    </nav>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <span class="badge bg-{{ 'primary' if document.file_type == 'essay' else 'warning' }} me-2">
+                            {{ get_document_type_name(document.file_type) }}
+                        </span>
+                        <h1 class="mb-2">{{ document.title }}</h1>
+                    </div>
+                    {% if current_user.is_authenticated %}
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary" type="button" 
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <a class="dropdown-item" 
+                                   href="{{ url_for('main.download_document', level=level, doc_id=document.id) }}">
+                                    <i class="fas fa-download me-2"></i>Download
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" 
+                                   href="{{ url_for('main.preview_document', level=level, doc_id=document.id) }}" 
+                                   target="_blank">
+                                    <i class="fas fa-file-pdf me-2"></i>View as PDF
+                                </a>
+                            </li>
+                            {% if current_user.is_admin %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="#">
+                                    <i class="fas fa-edit me-2"></i>Edit
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item text-danger" href="#">
+                                    <i class="fas fa-trash me-2"></i>Delete
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <p class="text-muted">
+                        <i class="fas fa-folder me-2"></i>{{ document.doc_category.name }} |
+                        <i class="fas fa-book me-2"></i>{{ document.doc_category.subject }} |
+                        <i class="fas fa-user me-2"></i>{{ document.uploader.username if document.uploader else 'Unknown' }} |
+                        <i class="fas fa-calendar me-2"></i>{{ format_date(document.created_at) }}
+                    </p>
+                </div>
+                
+                <hr>
+                
+                <div class="document-content">
+                    <h4>Description</h4>
+                    <p>{{ document.description or 'No description provided.' }}</p>
+                    
+                    {% if document.file_name %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-file me-2"></i>
+                        File: {{ document.file_name }} 
+                        ({% if document.file_path %}{{ format_file_size(document.file_info.size) if document.file_info else 'N/A' }}{% endif %})
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <hr>
+                
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <span class="me-3">
+                            <i class="fas fa-download me-1"></i> 
+                            {{ document.download_count }} downloads
+                        </span>
+                        <span>
+                            <i class="fas fa-eye me-1"></i> 
+                            {{ document.view_count }} views
+                        </span>
+                    </div>
+                    <div class="btn-group" role="group">
+                        <a href="{{ url_for('main.download_document', level=level, doc_id=document.id) }}" 
+                           class="btn btn-primary">
+                            <i class="fas fa-download me-2"></i>Download
+                        </a>
+                        <a href="{{ url_for('main.preview_document', level=level, doc_id=document.id) }}" 
+                           class="btn btn-outline-secondary" target="_blank">
+                            <i class="fas fa-file-pdf me-2"></i>View PDF
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {% if related_docs %}
+        <div class="card shadow mt-4">
+            <div class="card-body">
+                <h4>Related Documents</h4>
+                <hr>
+                <div class="row">
+                    {% for doc in related_docs %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h6 class="card-title mb-2">
+                                    <a href="{{ url_for('main.view_document', level=level, doc_id=doc.id) }}" 
+                                       class="text-decoration-none">
+                                        {{ doc.title|truncate(40) }}
+                                    </a>
+                                </h6>
+                                <p class="card-text text-muted small mb-2">
+                                    {{ doc.description|truncate(60) }}
+                                </p>
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-muted">
+                                        <i class="fas fa-folder me-1"></i>{{ doc.doc_category.name }}
+                                    </small>
+                                    <a href="{{ url_for('main.download_document', level=level, doc_id=doc.id) }}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-download me-1"></i>Download
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card shadow">
+            <div class="card-body">
+                <h4 class="card-title">Document Information</h4>
+                <hr>
+                <dl class="row">
+                    <dt class="col-sm-5">Type:</dt>
+                    <dd class="col-sm-7">{{ get_document_type_name(document.file_type) }}</dd>
+                    
+                    <dt class="col-sm-5">Category:</dt>
+                    <dd class="col-sm-7">{{ document.doc_category.name }}</dd>
+                    
+                    <dt class="col-sm-5">Subject:</dt>
+                    <dd class="col-sm-7">{{ document.doc_category.subject }}</dd>
+                    
+                    <dt class="col-sm-5">Level:</dt>
+                    <dd class="col-sm-7">{{ get_level_name(document.doc_category.level) }}</dd>
+                    
+                    <dt class="col-sm-5">Uploaded:</dt>
+                    <dd class="col-sm-7">{{ format_date(document.created_at) }}</dd>
+                    
+                    <dt class="col-sm-5">Last Updated:</dt>
+                    <dd class="col-sm-7">{{ format_date(document.updated_at) }}</dd>
+                    
+                    <dt class="col-sm-5">Downloads:</dt>
+                    <dd class="col-sm-7">{{ document.download_count }}</dd>
+                    
+                    <dt class="col-sm-5">Views:</dt>
+                    <dd class="col-sm-7">{{ document.view_count }}</dd>
+                </dl>
+            </div>
+        </div>
+        
+        {% if current_user.is_authenticated %}
+        <div class="card shadow mt-4">
+            <div class="card-body text-center">
+                <h5>Share Your Work</h5>
+                <p class="mb-3">Upload your own documents to help others.</p>
+                <a href="{{ url_for('upload.upload_document', level=level) }}" 
+                   class="btn btn-primary w-100">
+                    <i class="fas fa-upload me-2"></i>Upload Document
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

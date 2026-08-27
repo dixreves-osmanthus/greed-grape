@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - StudyHub{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h1>
+        <i class="fas fa-tachometer-alt text-primary me-3"></i>
+        Admin Dashboard
+    </h1>
+    <p class="lead">Welcome back, {{ current_user.username }}! Manage your education platform.</p>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="admin-stats">
+            <i class="fas fa-users fa-2x mb-3"></i>
+            <h3>{{ total_users }}</h3>
+            <p class="mb-0">Total Users</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="admin-stats" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">
+            <i class="fas fa-question-circle fa-2x mb-3"></i>
+            <h3>{{ total_questions }}</h3>
+            <p class="mb-0">Total Questions</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="admin-stats" style="background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%); color: #212529;">
+            <i class="fas fa-file-alt fa-2x mb-3"></i>
+            <h3>{{ total_documents }}</h3>
+            <p class="mb-0">Total Documents</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="admin-stats" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">
+            <i class="fas fa-file-pdf fa-2x mb-3"></i>
+            <h3>{{ total_papers }}</h3>
+            <p class="mb-0">Total Exam Papers</p>
+        </div>
+    </div>
+</div>
+
+<!-- Pending Approvals -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card shadow h-100">
+            <div class="card-body">
+                <h4 class="card-title">
+                    <i class="fas fa-clock text-warning me-2"></i>
+                    Pending Approvals
+                </h4>
+                <hr>
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h2>{{ pending_documents }}</h2>
+                        <p class="text-muted mb-0">Documents</p>
+                        <a href="{{ url_for('admin.pending_documents') }}" class="btn btn-warning btn-sm mt-2">
+                            <i class="fas fa-list me-1"></i>Review
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <h2>{{ pending_papers }}</h2>
+                        <p class="text-muted mb-0">Exam Papers</p>
+                        <a href="{{ url_for('admin.pending_papers') }}" class="btn btn-danger btn-sm mt-2">
+                            <i class="fas fa-list me-1"></i>Review
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card shadow h-100">
+            <div class="card-body">
+                <h4 class="card-title">
+                    <i class="fas fa-chart-line text-info me-2"></i>
+                    Quick Actions
+                </h4>
+                <hr>
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <a href="{{ url_for('admin.manage_users') }}" class="btn btn-primary w-100">
+                            <i class="fas fa-users me-2"></i>Manage Users
+                        </a>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <a href="{{ url_for('admin.manage_question_categories') }}" class="btn btn-info w-100">
+                            <i class="fas fa-list me-2"></i>Question Categories
+                        </a>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <a href="{{ url_for('admin.manage_document_categories') }}" class="btn btn-warning w-100">
+                            <i class="fas fa-folder me-2"></i>Document Categories
+                        </a>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <a href="{{ url_for('admin.manage_questions') }}" class="btn btn-success w-100">
+                            <i class="fas fa-question-circle me-2"></i>Manage Questions
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row">
+    <div class="col-md-4">
+        <div class="card shadow">
+            <div class="card-body">
+                <h4 class="card-title">
+                    <i class="fas fa-user-plus text-success me-2"></i>
+                    Recent Users
+                </h4>
+                <hr>
+                {% if recent_users %}
+                <div class="recent-list">
+                    {% for user in recent_users %}
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="avatar-circle bg-primary text-white d-inline-flex align-items-center justify-content-center rounded-circle me-3" style="width: 40px; height: 40px; font-size: 1rem;">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0">{{ user.username }}</h6>
+                            <small class="text-muted">{{ user.email }}</small>
+                        </div>
+                        <small class="text-muted">{{ user.created_at.strftime('%b %d') }}</small>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center">No recent users</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card shadow">
+            <div class="card-body">
+                <h4 class="card-title">
+                    <i class="fas fa-question-circle text-info me-2"></i>
+                    Recent Questions
+                </h4>
+                <hr>
+                {% if recent_questions %}
+                <div class="recent-list">
+                    {% for question in recent_questions %}
+                    <div class="mb-3 pb-2 border-bottom">
+                        <h6 class="mb-1">{{ question.content|truncate(50) }}</h6>
+                        <small class="text-muted">
+                            {{ question.category.name }} | 
+                            {{ question.difficulty|title }} |
+                            {{ format_date(question.created_at, '%b %d') }}
+                        </small>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center">No recent questions</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card shadow">
+            <div class="card-body">
+                <h4 class="card-title">
+                    <i class="fas fa-file-alt text-warning me-2"></i>
+                    Recent Documents
+                </h4>
+                <hr>
+                {% if recent_documents %}
+                <div class="recent-list">
+                    {% for doc in recent_documents %}
+                    <div class="mb-3 pb-2 border-bottom">
+                        <h6 class="mb-1">{{ doc.title|truncate(40) }}</h6>
+                        <small class="text-muted">
+                            {{ doc.doc_category.name }} | 
+                            {{ doc.file_type|title }} |
+                            {{ format_date(doc.created_at, '%b %d') }}
+                        </small>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center">No recent documents</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

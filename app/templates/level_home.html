@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+
+{% block title %}{{ level_name }} - StudyHub{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ level_name }}</li>
+        </ol>
+    </nav>
+    
+    <h1>
+        <i class="fas fa-{% if level == 'high_school' %}school{% else %}university{% endif %} text-{% if level == 'high_school' %}primary{% else %}success{% endif %} me-3"></i>
+        {{ level_name }} Resources
+    </h1>
+    <p class="lead">Browse and access educational resources for {{ level_name }} students.</p>
+</div>
+
+<!-- Quick Access Cards -->
+<div class="row mb-5">
+    <div class="col-md-4">
+        <div class="card text-center p-4 h-100">
+            <i class="fas fa-question-circle fa-2x text-info mb-3"></i>
+            <h4>Question Bank</h4>
+            <p>Generate custom question papers from our extensive collection.</p>
+            <a href="{{ url_for('main.questions', level=level) }}" class="btn btn-info">
+                <i class="fas fa-search me-2"></i>Browse Questions
+            </a>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center p-4 h-100">
+            <i class="fas fa-file-alt fa-2x text-warning mb-3"></i>
+            <h4>Documents</h4>
+            <p>Access essays and handouts for {{ level_name }}.</p>
+            <a href="{{ url_for('main.documents', level=level) }}" class="btn btn-warning">
+                <i class="fas fa-search me-2"></i>Browse Documents
+            </a>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center p-4 h-100">
+            <i class="fas fa-file-pdf fa-2x text-danger mb-3"></i>
+            <h4>Exam Papers</h4>
+            <p>Download past exam papers for practice.</p>
+            <a href="{{ url_for('main.exam_papers', level=level) }}" class="btn btn-danger">
+                <i class="fas fa-search me-2"></i>Browse Papers
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Generate Question Paper Section -->
+{% if question_categories %}
+<div class="card shadow mb-5">
+    <div class="card-body">
+        <h3 class="card-title mb-4">
+            <i class="fas fa-plus-circle text-primary me-2"></i>
+            Generate Custom Question Paper
+        </h3>
+        <p class="card-text mb-4">
+            Create your own question paper by selecting from our extensive question bank.
+        </p>
+        <a href="{{ url_for('main.generate_question_paper', level=level) }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Generate Question Paper
+        </a>
+    </div>
+</div>
+{% endif %}
+
+<!-- Categories Section -->
+<div class="row mb-5">
+    {% if question_categories %}
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-list me-2"></i>Question Categories</h4>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    {% for category in question_categories %}
+                    <a href="{{ url_for('main.questions', level=level, category=category.id) }}" 
+                       class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">{{ category.name }}</h5>
+                            <small>{{ category.subject }}</small>
+                        </div>
+                        <p class="mb-1">{{ category.description|truncate(100) }}</p>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    {% if document_categories %}
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0"><i class="fas fa-folder me-2"></i>Document Categories</h4>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    {% for category in document_categories %}
+                    <a href="{{ url_for('main.documents', level=level, category=category.id) }}" 
+                       class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">{{ category.name }}</h5>
+                            <small class="badge bg-{{ 'primary' if category.document_type == 'essay' else 'warning' }}">
+                                {{ get_document_type_name(category.document_type) }}
+                            </small>
+                        </div>
+                        <p class="mb-1">{{ category.description|truncate(100) }}</p>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Recent Resources -->
+<div class="row">
+    {% if recent_documents %}
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h4 class="mb-0"><i class="fas fa-file-alt me-2"></i>Recent Documents</h4>
+            </div>
+            <div class="card-body">
+                {% for doc in recent_documents %}
+                <div class="mb-3 pb-3 border-bottom">
+                    <h5>
+                        <a href="{{ url_for('main.view_document', level=level, doc_id=doc.id) }}" class="text-decoration-none">
+                            {{ doc.title|truncate(50) }}
+                        </a>
+                    </h5>
+                    <p class="mb-1">
+                        <small class="text-muted">
+                            <i class="fas fa-folder me-1"></i>{{ doc.doc_category.name }} |
+                            <i class="fas fa-tags me-1"></i>{{ doc.doc_category.subject }} |
+                            <i class="fas fa-download me-1"></i>{{ doc.download_count }} downloads
+                        </small>
+                    </p>
+                </div>
+                {% endfor %}
+                <div class="text-center">
+                    <a href="{{ url_for('main.documents', level=level) }}" class="btn btn-info">
+                        <i class="fas fa-plus me-2"></i>View All Documents
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    {% if recent_papers %}
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0"><i class="fas fa-file-pdf me-2"></i>Recent Exam Papers</h4>
+            </div>
+            <div class="card-body">
+                {% for paper in recent_papers %}
+                <div class="mb-3 pb-3 border-bottom">
+                    <h5>
+                        <a href="{{ url_for('main.view_paper', level=level, paper_id=paper.id) }}" class="text-decoration-none">
+                            {{ paper.title|truncate(50) }}
+                        </a>
+                    </h5>
+                    <p class="mb-1">
+                        <small class="text-muted">
+                            <i class="fas fa-book me-1"></i>{{ paper.subject }} |
+                            <i class="fas fa-calendar me-1"></i>{{ paper.year or 'N/A' }} |
+                            <i class="fas fa-download me-1"></i>{{ paper.download_count }} downloads
+                        </small>
+                    </p>
+                </div>
+                {% endfor %}
+                <div class="text-center">
+                    <a href="{{ url_for('main.exam_papers', level=level) }}" class="btn btn-danger">
+                        <i class="fas fa-plus me-2"></i>View All Papers
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% if current_user.is_authenticated %}
+<div class="card shadow">
+    <div class="card-body text-center">
+        <h4>Share Your Knowledge</h4>
+        <p class="mb-4">Upload your own questions, essays, handouts, or exam papers to help other students.</p>
+        <a href="{{ url_for('upload.upload_center', level=level) }}" class="btn btn-primary btn-lg">
+            <i class="fas fa-upload me-2"></i>Go to Upload Center
+        </a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

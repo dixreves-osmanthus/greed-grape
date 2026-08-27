@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Center - {{ level_name }} - StudyHub{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('main.level_home', level=level) }}">{{ level_name }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Upload Center</li>
+        </ol>
+    </nav>
+    
+    <h1>
+        <i class="fas fa-upload text-primary me-3"></i>
+        {{ level_name }} Upload Center
+    </h1>
+    <p class="lead">Share your knowledge by uploading educational resources.</p>
+</div>
+
+<!-- Statistics Card -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card shadow">
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <h3>{{ user_documents }}</h3>
+                        <p class="text-muted mb-0">Documents Uploaded</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h3>{{ user_papers }}</h3>
+                        <p class="text-muted mb-0">Exam Papers Uploaded</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h3>Unlimited</h3>
+                        <p class="text-muted mb-0">Questions You Can Add</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Options -->
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <i class="fas fa-question-circle fa-3x text-info mb-3"></i>
+                <h4>Add Questions</h4>
+                <p>Add individual questions to the question bank for others to use in generating question papers.</p>
+                <a href="{{ url_for('upload.upload_question', level=level) }}" 
+                   class="btn btn-info w-100">
+                    <i class="fas fa-plus me-2"></i>Add Question
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <i class="fas fa-file-alt fa-3x text-warning mb-3"></i>
+                <h4>Upload Documents</h4>
+                <p>Upload essays and handouts in PDF, Word, or text format to share with the community.</p>
+                <a href="{{ url_for('upload.upload_document', level=level) }}" 
+                   class="btn btn-warning w-100">
+                    <i class="fas fa-upload me-2"></i>Upload Document
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <i class="fas fa-file-pdf fa-3x text-danger mb-3"></i>
+                <h4>Upload Exam Papers</h4>
+                <p>Upload past exam papers to help other students prepare for their exams.</p>
+                <a href="{{ url_for('upload.upload_paper', level=level) }}" 
+                   class="btn btn-danger w-100">
+                    <i class="fas fa-upload me-2"></i>Upload Exam Paper
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- My Uploads Section -->
+<div class="card shadow">
+    <div class="card-body">
+        <h3 class="card-title mb-4">
+            <i class="fas fa-list me-2"></i>My Recent Uploads
+        </h3>
+        
+        <ul class="nav nav-tabs" id="uploadsTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="questions-tab" data-bs-toggle="tab" 
+                        data-bs-target="#questions" type="button" role="tab">
+                    Questions
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="documents-tab" data-bs-toggle="tab" 
+                        data-bs-target="#documents" type="button" role="tab">
+                    Documents
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="papers-tab" data-bs-toggle="tab" 
+                        data-bs-target="#papers" type="button" role="tab">
+                    Exam Papers
+                </button>
+            </li>
+        </ul>
+        
+        <div class="tab-content mt-3" id="uploadsTabContent">
+            <div class="tab-pane fade show active" id="questions" role="tabpanel">
+                <p class="text-muted">Your recently added questions will appear here.</p>
+                <a href="{{ url_for('upload.my_uploads', level=level) }}" class="btn btn-outline-primary">
+                    <i class="fas fa-list me-2"></i>View All My Uploads
+                </a>
+            </div>
+            <div class="tab-pane fade" id="documents" role="tabpanel">
+                <p class="text-muted">Your recently uploaded documents will appear here.</p>
+                <a href="{{ url_for('upload.my_uploads', level=level) }}" class="btn btn-outline-primary">
+                    <i class="fas fa-list me-2"></i>View All My Uploads
+                </a>
+            </div>
+            <div class="tab-pane fade" id="papers" role="tabpanel">
+                <p class="text-muted">Your recently uploaded exam papers will appear here.</p>
+                <a href="{{ url_for('upload.my_uploads', level=level) }}" class="btn btn-outline-primary">
+                    <i class="fas fa-list me-2"></i>View All My Uploads
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Guidelines -->
+<div class="card shadow mt-4">
+    <div class="card-body">
+        <h4 class="card-title">
+            <i class="fas fa-info-circle text-info me-2"></i>
+            Upload Guidelines
+        </h4>
+        <hr>
+        <ul>
+            <li><strong>Questions:</strong> Add clear, well-structured questions with correct answers.</li>
+            <li><strong>Documents:</strong> Upload original content or ensure you have permission to share.</li>
+            <li><strong>Exam Papers:</strong> Only upload papers that are allowed to be shared publicly.</li>
+            <li><strong>File Types:</strong> PDF, Word documents, and text files are accepted.</li>
+            <li><strong>Approval:</strong> All uploads are reviewed by administrators before being made public.</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

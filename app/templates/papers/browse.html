@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}Exam Papers - {{ level_name }} - StudyHub{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('main.level_home', level=level) }}">{{ level_name }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Exam Papers</li>
+        </ol>
+    </nav>
+    
+    <h1>
+        <i class="fas fa-file-pdf text-danger me-3"></i>
+        {{ level_name }} Exam Papers
+    </h1>
+    <p class="lead">Download past exam papers for practice and preparation.</p>
+</div>
+
+<!-- Search and Filter -->
+<div class="card shadow mb-4">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('main.exam_papers', level=level) }}" class="row g-3">
+            <div class="col-md-3">
+                <label for="subject" class="form-label">Subject</label>
+                <select name="subject" id="subject" class="form-select">
+                    <option value="">All Subjects</option>
+                    {% for subject in subjects %}
+                    <option value="{{ subject }}" {% if selected_subject == subject %}selected{% endif %}>
+                        {{ subject }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="year" class="form-label">Year</label>
+                <select name="year" id="year" class="form-select">
+                    <option value="">All Years</option>
+                    {% for year in years %}
+                    <option value="{{ year }}" {% if selected_year == year %}selected{% endif %}>
+                        {{ year }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="search" class="form-label">Search</label>
+                <input type="text" name="search" id="search" class="form-control" 
+                       placeholder="Search exam papers..." value="{{ search_query or '' }}">
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search me-2"></i>Search
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Papers Grid -->
+<div class="row">
+    {% if papers.items %}
+    {% for paper in papers.items %}
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="badge bg-danger">Exam Paper</span>
+                    {% if current_user.is_authenticated and current_user.is_admin %}
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary" type="button" 
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <a class="dropdown-item" href="#">
+                                    <i class="fas fa-edit me-2"></i>Edit
+                                </a>
+                            </li>
+                            <li>
+                                <form action="" method="POST">
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i class="fas fa-trash me-2"></i>Delete
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <h5 class="card-title mb-2">
+                    <a href="{{ url_for('main.view_paper', level=level, paper_id=paper.id) }}" 
+                       class="text-decoration-none text-dark">
+                        {{ paper.title|truncate(50) }}
+                    </a>
+                </h5>
+                
+                <p class="card-text text-muted small mb-3">
+                    {{ paper.description|truncate(100) }}
+                </p>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="small text-muted">
+                        <i class="fas fa-book me-1"></i>{{ paper.subject }}<br>
+                        <i class="fas fa-calendar me-1"></i>{{ paper.year or 'N/A' }}
+                    </div>
+                    <div class="text-end">
+                        <small class="text-muted d-block">
+                            <i class="fas fa-download me-1"></i>{{ paper.download_count }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-white border-top-0">
+                <a href="{{ url_for('main.download_paper', level=level, paper_id=paper.id) }}" 
+                   class="btn btn-danger w-100">
+                    <i class="fas fa-download me-2"></i>Download Paper
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    
+    <!-- Pagination -->
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if papers.has_prev %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('main.exam_papers', level=level, page=papers.prev_num, subject=selected_subject, year=selected_year, search=search_query) }}">
+                    Previous
+                </a>
+            </li>
+            {% endif %}
+            
+            {% for page_num in papers.iter_pages() %}
+                {% if page_num %}
+                <li class="page-item {% if page_num == papers.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('main.exam_papers', level=level, page=page_num, subject=selected_subject, year=selected_year, search=search_query) }}">
+                        {{ page_num }}
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if papers.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('main.exam_papers', level=level, page=papers.next_num, subject=selected_subject, year=selected_year, search=search_query) }}">
+                    Next
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    
+    {% else %}
+    <div class="col-12">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>No exam papers found matching your criteria.
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% if current_user.is_authenticated %}
+<div class="card shadow mt-4">
+    <div class="card-body text-center">
+        <h4>Share Your Exam Papers</h4>
+        <p class="mb-4">Help other students by uploading past exam papers.</p>
+        <a href="{{ url_for('upload.upload_paper', level=level) }}" class="btn btn-primary btn-lg">
+            <i class="fas fa-upload me-2"></i>Upload Exam Paper
+        </a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

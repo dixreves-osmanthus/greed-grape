@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Preview Question Paper - StudyHub{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('main.level_home', level=level) }}">{{ level_name }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Preview Question Paper</li>
+        </ol>
+    </nav>
+    
+    <h1>
+        <i class="fas fa-file-pdf text-danger me-3"></i>
+        {{ title }}
+    </h1>
+    <p class="lead">
+        Subject: {{ subject }} | Level: {{ level_name }} | 
+        Total Questions: {{ questions|length }}
+    </p>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <!-- Action Buttons -->
+        <div class="card shadow mb-4">
+            <div class="card-body text-center">
+                <div class="btn-group" role="group">
+                    <a href="{{ url_for('main.download_question_paper', level=level, filename=pdf_path|basename) }}" 
+                       class="btn btn-primary btn-lg">
+                        <i class="fas fa-download me-2"></i>Download Question Paper
+                    </a>
+                    {% if answer_key_path %}
+                    <a href="{{ url_for('main.download_question_paper', level=level, filename=answer_key_path|basename) }}" 
+                       class="btn btn-success btn-lg">
+                        <i class="fas fa-check-circle me-2"></i>Download Answer Key
+                    </a>
+                    {% endif %}
+                    <a href="{{ url_for('main.generate_question_paper', level=level) }}" 
+                       class="btn btn-outline-secondary btn-lg">
+                        <i class="fas fa-redo me-2"></i>Generate Another
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- PDF Preview -->
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-eye me-2"></i>Question Paper Preview</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    This is a preview of your generated question paper. 
+                    Use the buttons above to download the PDF or generate a new paper.
+                </div>
+                
+                <!-- Questions List -->
+                <div class="question-list">
+                    {% for i, question in enumerate(questions, 1) %}
+                    <div class="card mb-3 {% if loop.index > 1 %}border-top-0{% endif %}">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <span class="badge bg-{{ 'success' if question.difficulty == 'easy' else 'warning' if question.difficulty == 'medium' else 'danger' }} me-2">
+                                    {{ get_difficulty_name(question.difficulty) }}
+                                </span>
+                                Question {{ i }} ({{ question.marks }} mark{{ 's' if question.marks > 1 }})
+                            </h5>
+                            <p class="card-text">{{ question.content }}</p>
+                            
+                            {% if question.option_a or question.option_b %}
+                            <div class="options ms-3">
+                                {% if question.option_a %}<div class="mb-2">A. {{ question.option_a }}</div>{% endif %}
+                                {% if question.option_b %}<div class="mb-2">B. {{ question.option_b }}</div>{% endif %}
+                                {% if question.option_c %}<div class="mb-2">C. {{ question.option_c }}</div>{% endif %}
+                                {% if question.option_d %}<div class="mb-2">D. {{ question.option_d }}</div>{% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Summary -->
+                <div class="alert alert-success mt-4">
+                    <h5><i class="fas fa-check-circle me-2"></i>Paper Summary</h5>
+                    <ul class="mb-0">
+                        <li><strong>Total Questions:</strong> {{ questions|length }}</li>
+                        <li><strong>Total Marks:</strong> {{ questions|sum(attribute='marks') }}</li>
+                        <li><strong>Difficulty Breakdown:</strong> 
+                            {{ questions|selectattr('difficulty', 'equalto', 'easy')|list|length }} Easy, 
+                            {{ questions|selectattr('difficulty', 'equalto', 'medium')|list|length }} Medium, 
+                            {{ questions|selectattr('difficulty', 'equalto', 'hard')|list|length }} Hard
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Embedded PDF Viewer (Optional) -->
+<div class="modal fade" id="pdfViewerModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">PDF Viewer</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <iframe id="pdfViewer" width="100%" height="600px" frameborder="0"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Function to view PDF in modal
+function viewPDFInModal(pdfUrl) {
+    const modal = new bootstrap.Modal(document.getElementById('pdfViewerModal'));
+    const iframe = document.getElementById('pdfViewer');
+    
+    // For local files, we need to use a different approach
+    // This is a placeholder - in production, you might need a PDF viewer library
+    iframe.src = pdfUrl;
+    modal.show();
+}
+
+// Auto-hide alerts after 5 seconds
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(function(alert) {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        });
+    }, 5000);
+});
+</script>
+{% endblock %}
