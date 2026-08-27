@@ -4,15 +4,8 @@
 
 {% block content %}
 <div class="mb-4">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
-            <li class="breadcrumb-item active" aria-current="page">{{ level_name }}</li>
-        </ol>
-    </nav>
-    
     <h1>
-        <i class="fas fa-{% if level == 'high_school' %}school{% else %}university{% endif %} text-{% if level == 'high_school' %}primary{% else %}success{% endif %} me-3"></i>
+        <i class="fas fa-{% if level == 'high_school' %}school{% else %}university{% endif %} me-3"></i>
         {{ level_name }} Resources
     </h1>
     <p class="lead">Browse and access educational resources for {{ level_name }} students.</p>
@@ -54,7 +47,7 @@
 
 <!-- Generate Question Paper Section -->
 {% if question_categories %}
-<div class="card shadow mb-5">
+<div class="card mb-5">
     <div class="card-body">
         <h3 class="card-title mb-4">
             <i class="fas fa-plus-circle text-primary me-2"></i>
@@ -75,7 +68,7 @@
     {% if question_categories %}
     <div class="col-md-6">
         <div class="card h-100">
-            <div class="card-header bg-primary text-white">
+            <div class="card-header">
                 <h4 class="mb-0"><i class="fas fa-list me-2"></i>Question Categories</h4>
             </div>
             <div class="card-body">
@@ -99,7 +92,7 @@
     {% if document_categories %}
     <div class="col-md-6">
         <div class="card h-100">
-            <div class="card-header bg-success text-white">
+            <div class="card-header">
                 <h4 class="mb-0"><i class="fas fa-folder me-2"></i>Document Categories</h4>
             </div>
             <div class="card-body">
@@ -110,7 +103,7 @@
                         <div class="d-flex w-100 justify-content-between">
                             <h5 class="mb-1">{{ category.name }}</h5>
                             <small class="badge bg-{{ 'primary' if category.document_type == 'essay' else 'warning' }}">
-                                {{ get_document_type_name(category.document_type) }}
+                                {{ category.document_type|title }}
                             </small>
                         </div>
                         <p class="mb-1">{{ category.description|truncate(100) }}</p>
@@ -128,7 +121,7 @@
     {% if recent_documents %}
     <div class="col-md-6">
         <div class="card mb-4">
-            <div class="card-header bg-info text-white">
+            <div class="card-header">
                 <h4 class="mb-0"><i class="fas fa-file-alt me-2"></i>Recent Documents</h4>
             </div>
             <div class="card-body">
@@ -149,7 +142,7 @@
                 </div>
                 {% endfor %}
                 <div class="text-center">
-                    <a href="{{ url_for('main.documents', level=level) }}" class="btn btn-info">
+                    <a href="{{ url_for('main.documents', level=level) }}" class="btn btn-outline-primary">
                         <i class="fas fa-plus me-2"></i>View All Documents
                     </a>
                 </div>
@@ -161,7 +154,7 @@
     {% if recent_papers %}
     <div class="col-md-6">
         <div class="card mb-4">
-            <div class="card-header bg-danger text-white">
+            <div class="card-header">
                 <h4 class="mb-0"><i class="fas fa-file-pdf me-2"></i>Recent Exam Papers</h4>
             </div>
             <div class="card-body">
@@ -182,7 +175,7 @@
                 </div>
                 {% endfor %}
                 <div class="text-center">
-                    <a href="{{ url_for('main.exam_papers', level=level) }}" class="btn btn-danger">
+                    <a href="{{ url_for('main.exam_papers', level=level) }}" class="btn btn-outline-primary">
                         <i class="fas fa-plus me-2"></i>View All Papers
                     </a>
                 </div>
@@ -193,11 +186,11 @@
 </div>
 
 {% if current_user.is_authenticated %}
-<div class="card shadow">
+<div class="card">
     <div class="card-body text-center">
         <h4>Share Your Knowledge</h4>
         <p class="mb-4">Upload your own questions, essays, handouts, or exam papers to help other students.</p>
-        <a href="{{ url_for('upload.upload_center', level=level) }}" class="btn btn-primary btn-lg">
+        <a href="{{ url_for('upload.upload_center', level=level) }}" class="btn btn-primary">
             <i class="fas fa-upload me-2"></i>Go to Upload Center
         </a>
     </div>

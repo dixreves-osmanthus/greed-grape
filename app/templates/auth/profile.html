@@ -5,11 +5,11 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-8">
-        <div class="card shadow">
+        <div class="card">
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-4 text-center mb-4 mb-md-0">
-                        <div class="avatar-circle bg-primary text-white d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 120px; height: 120px; font-size: 3rem;">
+                        <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-primary text-white mb-3" style="width: 120px; height: 120px; font-size: 3rem;">
                             <i class="fas fa-user"></i>
                         </div>
                         <h3>{{ current_user.username }}</h3>
@@ -60,7 +60,7 @@
             </div>
         </div>
         
-        <div class="card shadow mt-4">
+        <div class="card mt-4">
             <div class="card-body">
                 <h4>My Contributions</h4>
                 <hr>
@@ -74,16 +74,16 @@
                         <p class="text-muted">Documents Uploaded</p>
                     </div>
                     <div class="col-md-4">
-                        <h2>{{ current_user.exampapers if current_user.exampapers else 0 }}</h2>
+                        <h2>0</h2>
                         <p class="text-muted">Exam Papers Uploaded</p>
                     </div>
                 </div>
             </div>
         </div>
         
-        <div class="card shadow mt-4">
+        <div class="card mt-4">
             <div class="card-body text-center">
-                <a href="{{ url_for('upload.my_uploads', level='high_school') }}" class="btn btn-primary me-2">
+                <a href="{{ url_for('upload.my_uploads', level='high_school') }}" class="btn btn-outline-primary me-2">
                     <i class="fas fa-upload me-2"></i>View My Uploads
                 </a>
                 <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-secondary">
