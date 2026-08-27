@@ -4,14 +4,6 @@
 
 {% block content %}
 <div class="mb-4">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
-            <li class="breadcrumb-item"><a href="{{ url_for('main.level_home', level=level) }}">{{ level_name }}</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Preview Question Paper</li>
-        </ol>
-    </nav>
-    
     <h1>
         <i class="fas fa-file-pdf text-danger me-3"></i>
         {{ title }}
@@ -25,7 +17,7 @@
 <div class="row">
     <div class="col-12">
         <!-- Action Buttons -->
-        <div class="card shadow mb-4">
+        <div class="card mb-4">
             <div class="card-body text-center">
                 <div class="btn-group" role="group">
                     <a href="{{ url_for('main.download_question_paper', level=level, filename=pdf_path|basename) }}" 
@@ -47,8 +39,8 @@
         </div>
         
         <!-- PDF Preview -->
-        <div class="card shadow">
-            <div class="card-header bg-primary text-white">
+        <div class="card">
+            <div class="card-header">
                 <h4 class="mb-0"><i class="fas fa-eye me-2"></i>Question Paper Preview</h4>
             </div>
             <div class="card-body">
@@ -61,11 +53,11 @@
                 <!-- Questions List -->
                 <div class="question-list">
                     {% for i, question in enumerate(questions, 1) %}
-                    <div class="card mb-3 {% if loop.index > 1 %}border-top-0{% endif %}">
+                    <div class="card mb-3">
                         <div class="card-body">
                             <h5 class="card-title">
                                 <span class="badge bg-{{ 'success' if question.difficulty == 'easy' else 'warning' if question.difficulty == 'medium' else 'danger' }} me-2">
-                                    {{ get_difficulty_name(question.difficulty) }}
+                                    {{ question.difficulty|title }}
                                 </span>
                                 Question {{ i }} ({{ question.marks }} mark{{ 's' if question.marks > 1 }})
                             </h5>
@@ -101,45 +93,4 @@
         </div>
     </div>
 </div>
-
-<!-- Embedded PDF Viewer (Optional) -->
-<div class="modal fade" id="pdfViewerModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">PDF Viewer</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <iframe id="pdfViewer" width="100%" height="600px" frameborder="0"></iframe>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-// Function to view PDF in modal
-function viewPDFInModal(pdfUrl) {
-    const modal = new bootstrap.Modal(document.getElementById('pdfViewerModal'));
-    const iframe = document.getElementById('pdfViewer');
-    
-    // For local files, we need to use a different approach
-    // This is a placeholder - in production, you might need a PDF viewer library
-    iframe.src = pdfUrl;
-    modal.show();
-}
-
-// Auto-hide alerts after 5 seconds
-document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(function() {
-        const alerts = document.querySelectorAll('.alert');
-        alerts.forEach(function(alert) {
-            const bsAlert = new bootstrap.Alert(alert);
-            bsAlert.close();
-        });
-    }, 5000);
-});
-</script>
 {% endblock %}
