@@ -26,11 +26,13 @@ def create_app(config_class=Config):
     from app.auth import auth as auth_blueprint
     from app.admin import admin as admin_blueprint
     from app.api import api as api_blueprint
+    from app.upload import upload as upload_blueprint
     
     app.register_blueprint(main_blueprint)
     app.register_blueprint(auth_blueprint, url_prefix='/auth')
     app.register_blueprint(admin_blueprint, url_prefix='/admin')
     app.register_blueprint(api_blueprint, url_prefix='/api')
+    app.register_blueprint(upload_blueprint, url_prefix='/upload')
     
     # Create database tables
     with app.app_context():
