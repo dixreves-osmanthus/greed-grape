@@ -4,24 +4,19 @@
 
 {% block content %}
 <div class="mb-4">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
-            <li class="breadcrumb-item"><a href="{{ url_for('main.level_home', level=level) }}">{{ level_name }}</a></li>
-            <li class="breadcrumb-item"><a href="{{ url_for('main.exam_papers', level=level) }}">Exam Papers</a></li>
-            <li class="breadcrumb-item active" aria-current="page">{{ paper.title|truncate(30) }}</li>
-        </ol>
-    </nav>
+    <h1>
+        <i class="fas fa-file-pdf text-danger me-3"></i>
+        {{ paper.title }}
+    </h1>
 </div>
 
 <div class="row">
     <div class="col-md-8">
-        <div class="card shadow">
+        <div class="card">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <div>
                         <span class="badge bg-danger me-2">Exam Paper</span>
-                        <h1 class="mb-2">{{ paper.title }}</h1>
                     </div>
                     {% if current_user.is_authenticated %}
                     <div class="dropdown">
@@ -36,19 +31,6 @@
                                     <i class="fas fa-download me-2"></i>Download
                                 </a>
                             </li>
-                            {% if current_user.is_admin %}
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item" href="#">
-                                    <i class="fas fa-edit me-2"></i>Edit
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item text-danger" href="#">
-                                    <i class="fas fa-trash me-2"></i>Delete
-                                </a>
-                            </li>
-                            {% endif %}
                         </ul>
                     </div>
                     {% endif %}
@@ -59,7 +41,7 @@
                         <i class="fas fa-book me-2"></i>{{ paper.subject }} |
                         <i class="fas fa-calendar me-2"></i>{{ paper.year or 'N/A' }} |
                         <i class="fas fa-user me-2"></i>{{ paper.uploader.username if paper.uploader else 'Unknown' }} |
-                        <i class="fas fa-calendar me-2"></i>{{ format_date(paper.created_at) }}
+                        <i class="fas fa-calendar me-2"></i>{{ paper.created_at.strftime('%B %d, %Y') }}
                     </p>
                 </div>
                 
@@ -72,8 +54,7 @@
                     {% if paper.file_name %}
                     <div class="alert alert-info">
                         <i class="fas fa-file me-2"></i>
-                        File: {{ paper.file_name }} 
-                        ({% if paper.file_path %}{{ format_file_size(paper.file_info.size) if paper.file_info else 'N/A' }}{% endif %})
+                        File: {{ paper.file_name }}
                     </div>
                     {% endif %}
                 </div>
@@ -98,7 +79,7 @@
         </div>
         
         {% if related_papers %}
-        <div class="card shadow mt-4">
+        <div class="card mt-4">
             <div class="card-body">
                 <h4>Related Exam Papers</h4>
                 <hr>
@@ -136,7 +117,7 @@
     </div>
     
     <div class="col-md-4">
-        <div class="card shadow">
+        <div class="card">
             <div class="card-body">
                 <h4 class="card-title">Paper Information</h4>
                 <hr>
@@ -151,10 +132,10 @@
                     <dd class="col-sm-7">{{ paper.year or 'N/A' }}</dd>
                     
                     <dt class="col-sm-5">Level:</dt>
-                    <dd class="col-sm-7">{{ get_level_name(paper.level) }}</dd>
+                    <dd class="col-sm-7">{{ paper.level.replace('_', ' ')|title }}</dd>
                     
                     <dt class="col-sm-5">Uploaded:</dt>
-                    <dd class="col-sm-7">{{ format_date(paper.created_at) }}</dd>
+                    <dd class="col-sm-7">{{ paper.created_at.strftime('%B %d, %Y') }}</dd>
                     
                     <dt class="col-sm-5">Downloads:</dt>
                     <dd class="col-sm-7">{{ paper.download_count }}</dd>
@@ -163,7 +144,7 @@
         </div>
         
         {% if current_user.is_authenticated %}
-        <div class="card shadow mt-4">
+        <div class="card mt-4">
             <div class="card-body text-center">
                 <h5>Share Your Exam Papers</h5>
                 <p class="mb-3">Help other students by uploading past exam papers.</p>

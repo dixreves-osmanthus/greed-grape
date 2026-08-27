@@ -4,26 +4,21 @@
 
 {% block content %}
 <div class="mb-4">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
-            <li class="breadcrumb-item"><a href="{{ url_for('main.level_home', level=level) }}">{{ level_name }}</a></li>
-            <li class="breadcrumb-item"><a href="{{ url_for('main.documents', level=level) }}">Documents</a></li>
-            <li class="breadcrumb-item active" aria-current="page">{{ document.title|truncate(30) }}</li>
-        </ol>
-    </nav>
+    <h1>
+        <i class="fas fa-file-alt text-warning me-3"></i>
+        {{ document.title }}
+    </h1>
 </div>
 
 <div class="row">
     <div class="col-md-8">
-        <div class="card shadow">
+        <div class="card">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <div>
                         <span class="badge bg-{{ 'primary' if document.file_type == 'essay' else 'warning' }} me-2">
-                            {{ get_document_type_name(document.file_type) }}
+                            {{ document.file_type|title }}
                         </span>
-                        <h1 class="mb-2">{{ document.title }}</h1>
                     </div>
                     {% if current_user.is_authenticated %}
                     <div class="dropdown">
@@ -45,19 +40,6 @@
                                     <i class="fas fa-file-pdf me-2"></i>View as PDF
                                 </a>
                             </li>
-                            {% if current_user.is_admin %}
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item" href="#">
-                                    <i class="fas fa-edit me-2"></i>Edit
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item text-danger" href="#">
-                                    <i class="fas fa-trash me-2"></i>Delete
-                                </a>
-                            </li>
-                            {% endif %}
                         </ul>
                     </div>
                     {% endif %}
@@ -68,7 +50,7 @@
                         <i class="fas fa-folder me-2"></i>{{ document.doc_category.name }} |
                         <i class="fas fa-book me-2"></i>{{ document.doc_category.subject }} |
                         <i class="fas fa-user me-2"></i>{{ document.uploader.username if document.uploader else 'Unknown' }} |
-                        <i class="fas fa-calendar me-2"></i>{{ format_date(document.created_at) }}
+                        <i class="fas fa-calendar me-2"></i>{{ document.created_at.strftime('%B %d, %Y') }}
                     </p>
                 </div>
                 
@@ -81,8 +63,7 @@
                     {% if document.file_name %}
                     <div class="alert alert-info">
                         <i class="fas fa-file me-2"></i>
-                        File: {{ document.file_name }} 
-                        ({% if document.file_path %}{{ format_file_size(document.file_info.size) if document.file_info else 'N/A' }}{% endif %})
+                        File: {{ document.file_name }}
                     </div>
                     {% endif %}
                 </div>
@@ -115,7 +96,7 @@
         </div>
         
         {% if related_docs %}
-        <div class="card shadow mt-4">
+        <div class="card mt-4">
             <div class="card-body">
                 <h4>Related Documents</h4>
                 <hr>
@@ -153,13 +134,13 @@
     </div>
     
     <div class="col-md-4">
-        <div class="card shadow">
+        <div class="card">
             <div class="card-body">
                 <h4 class="card-title">Document Information</h4>
                 <hr>
                 <dl class="row">
                     <dt class="col-sm-5">Type:</dt>
-                    <dd class="col-sm-7">{{ get_document_type_name(document.file_type) }}</dd>
+                    <dd class="col-sm-7">{{ document.file_type|title }}</dd>
                     
                     <dt class="col-sm-5">Category:</dt>
                     <dd class="col-sm-7">{{ document.doc_category.name }}</dd>
@@ -168,13 +149,10 @@
                     <dd class="col-sm-7">{{ document.doc_category.subject }}</dd>
                     
                     <dt class="col-sm-5">Level:</dt>
-                    <dd class="col-sm-7">{{ get_level_name(document.doc_category.level) }}</dd>
+                    <dd class="col-sm-7">{{ document.doc_category.level.replace('_', ' ')|title }}</dd>
                     
                     <dt class="col-sm-5">Uploaded:</dt>
-                    <dd class="col-sm-7">{{ format_date(document.created_at) }}</dd>
-                    
-                    <dt class="col-sm-5">Last Updated:</dt>
-                    <dd class="col-sm-7">{{ format_date(document.updated_at) }}</dd>
+                    <dd class="col-sm-7">{{ document.created_at.strftime('%B %d, %Y') }}</dd>
                     
                     <dt class="col-sm-5">Downloads:</dt>
                     <dd class="col-sm-7">{{ document.download_count }}</dd>
@@ -186,7 +164,7 @@
         </div>
         
         {% if current_user.is_authenticated %}
-        <div class="card shadow mt-4">
+        <div class="card mt-4">
             <div class="card-body text-center">
                 <h5>Share Your Work</h5>
                 <p class="mb-3">Upload your own documents to help others.</p>
