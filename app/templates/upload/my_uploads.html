@@ -160,7 +160,7 @@
                         <th>Year</th>
                         <th>Status</th>
                         <th>Downloads</th>
-                        <th>Date</th>
+                        <th>Extracted</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -184,12 +184,30 @@
                             {% endif %}
                         </td>
                         <td>{{ paper.download_count }}</td>
-                        <td>{{ paper.created_at.strftime('%b %d, %Y') }}</td>
+                        <td>
+                            {% if paper.extracted_version %}
+                            <span class="badge bg-info">
+                                <i class="fas fa-check me-1"></i>Yes
+                            </span>
+                            {% else %}
+                            <span class="badge bg-secondary">No</span>
+                            {% endif %}
+                        </td>
                         <td>
                             <a href="{{ url_for('main.download_paper', level=level, paper_id=paper.id) }}" 
                                class="btn btn-sm btn-outline-primary">
                                 <i class="fas fa-download"></i>
                             </a>
+                            <a href="{{ url_for('upload.process_paper', level=level, paper_id=paper.id) }}" 
+                               class="btn btn-sm btn-outline-success" title="Process Paper">
+                                <i class="fas fa-cog"></i>
+                            </a>
+                            {% if paper.extracted_version %}
+                            <a href="{{ url_for('upload.view_processed_paper', level=level, paper_id=paper.id) }}" 
+                               class="btn btn-sm btn-outline-info" title="View Processed">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}

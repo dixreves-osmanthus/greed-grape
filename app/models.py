@@ -15,6 +15,8 @@ class User(UserMixin, db.Model):
     
     questions = db.relationship('Question', backref='author', lazy=True)
     documents = db.relationship('Document', backref='uploader', lazy=True)
+    exam_papers = db.relationship('ExamPaper', backref='paper_uploader', lazy=True)
+    extracted_papers = db.relationship('ExtractedExamPaper', backref='extractor', lazy=True)
     
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -122,5 +124,113 @@ class ExamPaper(db.Model):
     
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
+    # Relationship to extracted version
+    extracted_version = db.relationship('ExtractedExamPaper', backref='original_paper', lazy=True, uselist=False)
+    
     def __repr__(self):
         return f'<ExamPaper {self.title}>'
+
+
+# New models for exam paper processing
+class ExtractedExamPaper(db.Model):
+    """Stores the extracted and processed version of an exam paper."""
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # Reference to original paper
+    exam_paper_id = db.Column(db.Integer, db.ForeignKey('exam_paper.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    # Processing status
+    status = db.Column(db.String(50), default='pending')  # pending, processing, completed, failed
+    progress = db.Column(db.Integer, default=0)  # 0-100
+    
+    # LaTeX content
+    latex_content = db.Column(db.Text)
+    
+    # Generated PDF
+    processed_pdf_path = db.Column(db.String(500))
+    processed_pdf_name = db.Column(db.String(200))
+    
+    # Metadata
+    total_questions = db.Column(db.Integer, default=0)
+    questions_with_images = db.Column(db.Integer, default=0)
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    completed_at = db.Column(db.DateTime)
+    
+    # Extracted questions
+    extracted_questions = db.relationship('ExtractedQuestion', backref='extracted_paper', lazy=True, cascade='all, delete-orphan')
+    
+    def __repr__(self):
+        return f'<ExtractedExamPaper {self.id} - {self.status}>'
+
+
+class ExtractedQuestion(db.Model):
+    """Stores individual questions extracted from an exam paper."""
+    id = db.Column(db.Integer, primary_key=True)
+    
+    extracted_paper_id = db.Column(db.Integer, db.ForeignKey('extracted_exam_paper.id'), nullable=False)
+    
+    # Question data
+    question_number = db.Column(db.Integer)
+    content = db.Column(db.Text, nullable=False)
+    content_latex = db.Column(db.Text)
+    
+    # Options for multiple choice
+    option_a = db.Column(db.Text)
+    option_a_latex = db.Column(db.Text)
+    option_b = db.Column(db.Text)
+    option_b_latex = db.Column(db.Text)
+    option_c = db.Column(db.Text)
+    option_c_latex = db.Column(db.Text)
+    option_d = db.Column(db.Text)
+    option_d_latex = db.Column(db.Text)
+    
+    # Marks
+    marks = db.Column(db.Float)
+    
+    # Images associated with this question
+    question_images = db.relationship('QuestionImage', backref='question', lazy=True, cascade='all, delete-orphan')
+    
+    # Processing metadata
+    confidence_score = db.Column(db.Float)  # 0-1
+    needs_review = db.Column(db.Boolean, default=False)
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<ExtractedQuestion {self.id} - Q{self.question_number}>'
+
+
+class QuestionImage(db.Model):
+    """Stores images extracted from exam paper questions."""
+    id = db.Column(db.Integer, primary_key=True)
+    
+    extracted_question_id = db.Column(db.Integer, db.ForeignKey('extracted_question.id'), nullable=False)
+    
+    # Image file info
+    file_path = db.Column(db.String(500), nullable=False)
+    file_name = db.Column(db.String(200), nullable=False)
+    original_file_name = db.Column(db.String(200))
+    
+    # Image metadata
+    width = db.Column(db.Integer)
+    height = db.Column(db.Integer)
+    file_size = db.Column(db.Integer)
+    file_type = db.Column(db.String(50))
+    
+    # Position in question (for ordering)
+    position = db.Column(db.Integer, default=0)
+    
+    # Description/alt text
+    description = db.Column(db.String(500))
+    
+    # LaTeX reference (if included in LaTeX)
+    latex_reference = db.Column(db.String(100))
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<QuestionImage {self.id} - {self.file_name}>'

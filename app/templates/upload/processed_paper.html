@@ -1,0 +1,394 @@
+{% extends "base.html" %}
+
+{% block title %}{{ paper.title }} - Processed - StudyHub{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1>
+                <i class="fas fa-file-alt text-success me-3"></i>
+                {{ paper.title }} - Processed
+            </h1>
+            <p class="lead mb-0">
+                <span class="badge bg-success">{{ extracted_paper.total_questions }} Questions</span>
+                {% if extracted_paper.questions_with_images > 0 %}
+                <span class="badge bg-warning text-dark">{{ extracted_paper.questions_with_images }} with Images</span>
+                {% endif %}
+            </p>
+        </div>
+        <div>
+            <a href="{{ url_for('upload.download_processed_pdf', level=level, extracted_paper_id=extracted_paper.id) }}" 
+               class="btn btn-success">
+                <i class="fas fa-download me-2"></i>Download PDF
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Processing status alert -->
+{% if extracted_paper.status == 'processing' %}
+<div class="alert alert-info">
+    <i class="fas fa-spinner fa-spin me-2"></i>
+    Processing in progress... <span id="progressPercent">0%</span>
+    <button id="refreshBtn" class="btn btn-sm btn-outline-info ms-3">
+        <i class="fas fa-sync-alt"></i> Refresh
+    </button>
+</div>
+{% endif %}
+
+<!-- Tabs for different views -->
+<ul class="nav nav-tabs mb-4" id="paperTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="preview-tab" data-bs-toggle="tab" data-bs-target="#preview" type="button" role="tab">
+            <i class="fas fa-eye me-2"></i>PDF Preview
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="questions-tab" data-bs-toggle="tab" data-bs-target="#questions" type="button" role="tab">
+            <i class="fas fa-list me-2"></i>Extracted Questions ({{ extracted_paper.total_questions }})
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="latex-tab" data-bs-toggle="tab" data-bs-target="#latex" type="button" role="tab">
+            <i class="fas fa-code me-2"></i>LaTeX Code
+        </button>
+    </li>
+</ul>
+
+<!-- Tab content -->
+<div class="tab-content" id="paperTabsContent">
+    <!-- PDF Preview Tab -->
+    <div class="tab-pane fade show active" id="preview" role="tabpanel">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <h4>PDF Preview</h4>
+                    <p class="text-muted">Generated from LaTeX code</p>
+                </div>
+                
+                {% if extracted_paper.processed_pdf_path %}
+                <div class="pdf-viewer">
+                    <iframe 
+                        src="{{ url_for('static', filename='uploads/processed/' + extracted_paper.processed_pdf_name) }}" 
+                        width="100%" 
+                        height="600px" 
+                        style="border: 1px solid #dee2e6; border-radius: 8px;">
+                    </iframe>
+                </div>
+                {% else %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    PDF not generated yet. Please wait for processing to complete or regenerate.
+                </div>
+                {% endif %}
+                
+                <div class="text-center mt-4">
+                    <button id="regeneratePdfBtn" class="btn btn-outline-primary">
+                        <i class="fas fa-sync-alt me-2"></i>Regenerate PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Questions Tab -->
+    <div class="tab-pane fade" id="questions" role="tabpanel">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4>Extracted Questions</h4>
+                    <span class="badge bg-info">{{ questions_with_images|length }} Questions</span>
+                </div>
+                
+                <div class="accordion" id="questionsAccordion">
+                    {% for q_with_img in questions_with_images %}
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" 
+                                    data-bs-target="#question-{{ q_with_img.question.id }}" 
+                                    aria-expanded="true" aria-controls="question-{{ q_with_img.question.id }}">
+                                <span class="me-3">Question {{ q_with_img.question.question_number or loop.index }}</span>
+                                <span class="badge bg-primary me-2">{{ q_with_img.question.marks or 1 }} mark(s)</span>
+                                {% if q_with_img.images %}
+                                <span class="badge bg-warning text-dark">{{ q_with_img.images|length }} image(s)</span>
+                                {% endif %}
+                            </button>
+                        </h2>
+                        <div id="question-{{ q_with_img.question.id }}" class="accordion-collapse collapse show" 
+                             data-bs-parent="#questionsAccordion">
+                            <div class="accordion-body">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <div class="mb-3">
+                                            <h6>Content:</h6>
+                                            <div class="question-content p-3 bg-light rounded">
+                                                {{ q_with_img.question.content }}
+                                            </div>
+                                        </div>
+                                        
+                                        {% if q_with_img.question.option_a %}
+                                        <div class="mb-3">
+                                            <h6>Options:</h6>
+                                            <div class="options-list">
+                                                {% if q_with_img.question.option_a %}
+                                                <div class="option-item mb-2 p-2 bg-light rounded">
+                                                    <strong>a.</strong> {{ q_with_img.question.option_a }}
+                                                </div>
+                                                {% endif %}
+                                                {% if q_with_img.question.option_b %}
+                                                <div class="option-item mb-2 p-2 bg-light rounded">
+                                                    <strong>b.</strong> {{ q_with_img.question.option_b }}
+                                                </div>
+                                                {% endif %}
+                                                {% if q_with_img.question.option_c %}
+                                                <div class="option-item mb-2 p-2 bg-light rounded">
+                                                    <strong>c.</strong> {{ q_with_img.question.option_c }}
+                                                </div>
+                                                {% endif %}
+                                                {% if q_with_img.question.option_d %}
+                                                <div class="option-item mb-2 p-2 bg-light rounded">
+                                                    <strong>d.</strong> {{ q_with_img.question.option_d }}
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        <div class="mb-3">
+                                            <h6>LaTeX Content:</h6>
+                                            <textarea class="form-control latex-editor" 
+                                                      data-question-id="{{ q_with_img.question.id }}" 
+                                                      rows="4">{{ q_with_img.question.content_latex or q_with_img.question.content }}</textarea>
+                                            <button class="btn btn-sm btn-outline-primary mt-2 update-latex-btn" 
+                                                    data-question-id="{{ q_with_img.question.id }}">
+                                                <i class="fas fa-save me-1"></i>Save LaTeX
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-4">
+                                        {% if q_with_img.images %}
+                                        <h6>Images:</h6>
+                                        <div class="image-gallery">
+                                            {% for img in q_with_img.images %}
+                                            <div class="image-item mb-3">
+                                                <img src="{{ url_for('static', filename='uploads/' + img.file_path) }}" 
+                                                     alt="{{ img.description or 'Question image' }}" 
+                                                     class="img-thumbnail" 
+                                                     style="max-width: 100%; max-height: 200px;">
+                                                <div class="mt-2">
+                                                    <small class="text-muted">
+                                                        {{ img.width }}x{{ img.height }} px, {{ img.file_size }} bytes
+                                                    </small>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                        {% else %}
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            No images for this question
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- LaTeX Code Tab -->
+    <div class="tab-pane fade" id="latex" role="tabpanel">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4>LaTeX Code</h4>
+                    <button id="copyLatexBtn" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-copy me-2"></i>Copy to Clipboard
+                    </button>
+                </div>
+                
+                <div class="latex-code-container">
+                    <pre class="latex-code p-3 bg-dark text-light rounded">{{ extracted_paper.latex_content or 'No LaTeX content generated yet.' }}</pre>
+                </div>
+                
+                <div class="mt-4">
+                    <h6>Document Information:</h6>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <strong>Total Questions:</strong> {{ extracted_paper.total_questions }}
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Questions with Images:</strong> {{ extracted_paper.questions_with_images }}
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Processing Status:</strong> {{ extracted_paper.status }}
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Completed At:</strong> {{ extracted_paper.completed_at.strftime('%Y-%m-%d %H:%M:%S') if extracted_paper.completed_at else 'Not yet' }}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Regenerate PDF button
+    $('#regeneratePdfBtn').click(function() {
+        const btn = $(this);
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Generating...');
+        
+        $.ajax({
+            url: '{{ url_for("upload.regenerate_pdf", level=level, extracted_paper_id=extracted_paper.id) }}',
+            type: 'POST',
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    alert('PDF regenerated successfully!');
+                    // Refresh the page to show new PDF
+                    location.reload();
+                } else {
+                    alert('Error: ' + response.error);
+                }
+                btn.prop('disabled', false).html('<i class="fas fa-sync-alt me-2"></i>Regenerate PDF');
+            },
+            error: function(xhr, status, error) {
+                alert('Error regenerating PDF: ' + error);
+                btn.prop('disabled', false).html('<i class="fas fa-sync-alt me-2"></i>Regenerate PDF');
+            }
+        });
+    });
+    
+    // Update LaTeX for a question
+    $('.update-latex-btn').click(function() {
+        const btn = $(this);
+        const questionId = btn.data('question-id');
+        const latexContent = $(`textarea[data-question-id="${questionId}"]`).val();
+        
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Saving...');
+        
+        $.ajax({
+            url: '{{ url_for("upload.update_question_latex", level=level, extracted_paper_id=extracted_paper.id, question_id="__QUESTION_ID__") }}'.replace('__QUESTION_ID__', questionId),
+            type: 'POST',
+            data: {latex_content: latexContent},
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    btn.prop('disabled', false).html('<i class="fas fa-check me-1"></i>Saved!');
+                    setTimeout(() => {
+                        btn.html('<i class="fas fa-save me-1"></i>Save LaTeX');
+                    }, 1500);
+                } else {
+                    alert('Error: ' + response.error);
+                    btn.prop('disabled', false).html('<i class="fas fa-save me-1"></i>Save LaTeX');
+                }
+            },
+            error: function(xhr, status, error) {
+                alert('Error saving LaTeX: ' + error);
+                btn.prop('disabled', false).html('<i class="fas fa-save me-1"></i>Save LaTeX');
+            }
+        });
+    });
+    
+    // Copy LaTeX to clipboard
+    $('#copyLatexBtn').click(function() {
+        const latexCode = $('.latex-code').text();
+        navigator.clipboard.writeText(latexCode).then(function() {
+            const btn = $('#copyLatexBtn');
+            btn.html('<i class="fas fa-check me-2"></i>Copied!');
+            setTimeout(() => {
+                btn.html('<i class="fas fa-copy me-2"></i>Copy to Clipboard');
+            }, 2000);
+        }).catch(function(err) {
+            alert('Failed to copy: ' + err);
+        });
+    });
+    
+    // Refresh progress
+    $('#refreshBtn').click(function() {
+        location.reload();
+    });
+    
+    // Check progress periodically if still processing
+    {% if extracted_paper.status == 'processing' %}
+    function checkProgress() {
+        $.ajax({
+            url: '{{ url_for("upload.get_processing_progress", level=level, extracted_paper_id=extracted_paper.id) }}',
+            type: 'GET',
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    $('#progressPercent').text(response.progress + '%');
+                    
+                    if (response.status === 'completed') {
+                        location.reload();
+                    } else if (response.status === 'failed') {
+                        alert('Processing failed. Please try again.');
+                    } else {
+                        setTimeout(checkProgress, 2000);
+                    }
+                }
+            },
+            error: function() {
+                setTimeout(checkProgress, 2000);
+            }
+        });
+    }
+    
+    // Start checking progress
+    checkProgress();
+    {% endif %}
+});
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.pdf-viewer iframe {
+    min-height: 600px;
+}
+
+.latex-code {
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-x: auto;
+}
+
+.latex-code-container {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.question-content, .option-item {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.image-gallery .image-item {
+    border: 1px solid #dee2e6;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.accordion-button {
+    font-weight: 500;
+}
+
+.accordion-button:not(.collapsed) {
+    background-color: #f8f9fa;
+    color: #212529;
+}
+</style>
+{% endblock %}

@@ -1,9 +1,10 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, send_from_directory, jsonify
 from flask_login import login_required, current_user
 from app import db
-from app.models import Document, DocumentCategory, ExamPaper, Question, QuestionCategory
+from app.models import Document, DocumentCategory, ExamPaper, Question, QuestionCategory, ExtractedExamPaper, ExtractedQuestion, QuestionImage
 from app.utils import save_file, is_allowed_extension, get_file_extension
 from app.upload.forms import DocumentUploadForm, ExamPaperUploadForm
+from app.services.paper_processor import PaperProcessor
 import os
 
 from app.upload import upload
@@ -161,7 +162,7 @@ def upload_question(level):
         # Validate required fields
         if not content or not category_id:
             flash('Content and category are required', 'error')
-            
+        
         # Check if it's a multiple choice question
         is_multiple_choice = bool(option_a and option_b)
         
@@ -230,3 +231,272 @@ def my_uploads(level):
                          documents=documents,
                          papers=papers,
                          questions=questions)
+
+
+@upload.route('/<level>/paper/<int:paper_id>/process', methods=['GET'])
+@login_required
+def process_paper(level, paper_id):
+    """Process an uploaded exam paper to extract questions and images."""
+    if level not in ['high_school', 'university']:
+        flash('Invalid level', 'error')
+        return redirect(url_for('main.index'))
+    
+    # Get the exam paper
+    paper = ExamPaper.query.get(paper_id)
+    if not paper:
+        flash('Exam paper not found', 'error')
+        return redirect(url_for('upload.my_uploads', level=level))
+    
+    # Check if user owns the paper
+    if paper.user_id != current_user.id:
+        flash('You do not have permission to process this paper', 'error')
+        return redirect(url_for('upload.my_uploads', level=level))
+    
+    # Check if already processed
+    if paper.extracted_version:
+        return redirect(url_for('upload.view_processed_paper', 
+                               level=level, 
+                               paper_id=paper_id))
+    
+    return render_template('upload/process_paper.html',
+                         level=level,
+                         paper=paper)
+
+
+@upload.route('/<level>/paper/<int:paper_id>/start-processing', methods=['POST'])
+@login_required
+def start_processing(level, paper_id):
+    """Start processing an exam paper in the background."""
+    if level not in ['high_school', 'university']:
+        return jsonify({'success': False, 'error': 'Invalid level'})
+    
+    # Get the exam paper
+    paper = ExamPaper.query.get(paper_id)
+    if not paper:
+        return jsonify({'success': False, 'error': 'Exam paper not found'})
+    
+    # Check if user owns the paper
+    if paper.user_id != current_user.id:
+        return jsonify({'success': False, 'error': 'Permission denied'})
+    
+    # Check if already processed
+    if paper.extracted_version:
+        return jsonify({'success': False, 'error': 'Already processed'})
+    
+    try:
+        # Initialize processor
+        processor = PaperProcessor(current_app.config['UPLOAD_FOLDER'])
+        
+        # Process the paper (this will create the extracted paper record)
+        success, result = processor.process_paper(paper_id, current_user.id)
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'extracted_paper_id': result.id,
+                'redirect_url': url_for('upload.view_processed_paper', 
+                                       level=level, 
+                                       paper_id=paper_id)
+            })
+        else:
+            return jsonify({'success': False, 'error': str(result)})
+            
+    except Exception as e:
+        current_app.logger.error(f"Error processing paper: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@upload.route('/<level>/paper/<int:paper_id>/processed', methods=['GET'])
+@login_required
+def view_processed_paper(level, paper_id):
+    """View the processed exam paper with extracted questions."""
+    if level not in ['high_school', 'university']:
+        flash('Invalid level', 'error')
+        return redirect(url_for('main.index'))
+    
+    # Get the exam paper
+    paper = ExamPaper.query.get(paper_id)
+    if not paper:
+        flash('Exam paper not found', 'error')
+        return redirect(url_for('upload.my_uploads', level=level))
+    
+    # Check if user owns the paper
+    if paper.user_id != current_user.id:
+        flash('You do not have permission to view this paper', 'error')
+        return redirect(url_for('upload.my_uploads', level=level))
+    
+    # Get extracted version
+    extracted_paper = paper.extracted_version
+    if not extracted_paper:
+        return redirect(url_for('upload.process_paper', level=level, paper_id=paper_id))
+    
+    # Get extracted questions
+    questions = ExtractedQuestion.query.filter_by(
+        extracted_paper_id=extracted_paper.id
+    ).order_by(ExtractedQuestion.question_number).all()
+    
+    # Get images for each question
+    questions_with_images = []
+    for q in questions:
+        images = QuestionImage.query.filter_by(
+            extracted_question_id=q.id
+        ).order_by(QuestionImage.position).all()
+        questions_with_images.append({
+            'question': q,
+            'images': images
+        })
+    
+    return render_template('upload/processed_paper.html',
+                         level=level,
+                         paper=paper,
+                         extracted_paper=extracted_paper,
+                         questions_with_images=questions_with_images)
+
+
+@upload.route('/<level>/processed/<int:extracted_paper_id>/download-pdf', methods=['GET'])
+@login_required
+def download_processed_pdf(level, extracted_paper_id):
+    """Download the processed PDF."""
+    if level not in ['high_school', 'university']:
+        flash('Invalid level', 'error')
+        return redirect(url_for('main.index'))
+    
+    # Get extracted paper
+    extracted_paper = ExtractedExamPaper.query.get(extracted_paper_id)
+    if not extracted_paper:
+        flash('Processed paper not found', 'error')
+        return redirect(url_for('upload.my_uploads', level=level))
+    
+    # Check if user owns the extracted paper
+    if extracted_paper.user_id != current_user.id:
+        flash('You do not have permission to download this file', 'error')
+        return redirect(url_for('upload.my_uploads', level=level))
+    
+    if not extracted_paper.processed_pdf_path:
+        flash('PDF not generated yet', 'error')
+        return redirect(url_for('upload.view_processed_paper', 
+                               level=level, 
+                               paper_id=extracted_paper.exam_paper_id))
+    
+    # Send the file
+    try:
+        return send_from_directory(
+            os.path.dirname(extracted_paper.processed_pdf_path),
+            os.path.basename(extracted_paper.processed_pdf_path),
+            as_attachment=True
+        )
+    except Exception as e:
+        current_app.logger.error(f"Error sending PDF: {e}")
+        flash('Error sending PDF file', 'error')
+        return redirect(url_for('upload.view_processed_paper', 
+                               level=level, 
+                               paper_id=extracted_paper.exam_paper_id))
+
+
+@upload.route('/<level>/processed/<int:extracted_paper_id>/regenerate-pdf', methods=['POST'])
+@login_required
+def regenerate_pdf(level, extracted_paper_id):
+    """Regenerate PDF from updated LaTeX content."""
+    if level not in ['high_school', 'university']:
+        return jsonify({'success': False, 'error': 'Invalid level'})
+    
+    # Get extracted paper
+    extracted_paper = ExtractedExamPaper.query.get(extracted_paper_id)
+    if not extracted_paper:
+        return jsonify({'success': False, 'error': 'Processed paper not found'})
+    
+    # Check if user owns the extracted paper
+    if extracted_paper.user_id != current_user.id:
+        return jsonify({'success': False, 'error': 'Permission denied'})
+    
+    try:
+        # Initialize processor
+        processor = PaperProcessor(current_app.config['UPLOAD_FOLDER'])
+        
+        # Regenerate PDF
+        success = processor.regenerate_pdf(extracted_paper_id)
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': 'PDF regenerated successfully',
+                'pdf_url': url_for('upload.download_processed_pdf',
+                                   level=level,
+                                   extracted_paper_id=extracted_paper_id)
+            })
+        else:
+            return jsonify({'success': False, 'error': 'Failed to regenerate PDF'})
+            
+    except Exception as e:
+        current_app.logger.error(f"Error regenerating PDF: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@upload.route('/<level>/processed/<int:extracted_paper_id>/question/<int:question_id>/update', methods=['POST'])
+@login_required
+def update_question_latex(level, extracted_paper_id, question_id):
+    """Update LaTeX content for a specific question."""
+    if level not in ['high_school', 'university']:
+        return jsonify({'success': False, 'error': 'Invalid level'})
+    
+    # Get extracted paper
+    extracted_paper = ExtractedExamPaper.query.get(extracted_paper_id)
+    if not extracted_paper:
+        return jsonify({'success': False, 'error': 'Processed paper not found'})
+    
+    # Check if user owns the extracted paper
+    if extracted_paper.user_id != current_user.id:
+        return jsonify({'success': False, 'error': 'Permission denied'})
+    
+    # Get question
+    question = ExtractedQuestion.query.get(question_id)
+    if not question or question.extracted_paper_id != extracted_paper_id:
+        return jsonify({'success': False, 'error': 'Question not found'})
+    
+    # Get new LaTeX content
+    latex_content = request.form.get('latex_content')
+    if not latex_content:
+        return jsonify({'success': False, 'error': 'No LaTeX content provided'})
+    
+    try:
+        # Update question
+        processor = PaperProcessor(current_app.config['UPLOAD_FOLDER'])
+        success = processor.update_question_latex(question_id, latex_content)
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': 'Question LaTeX updated successfully'
+            })
+        else:
+            return jsonify({'success': False, 'error': 'Failed to update question'})
+            
+    except Exception as e:
+        current_app.logger.error(f"Error updating question: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@upload.route('/<level>/processed/<int:extracted_paper_id>/progress', methods=['GET'])
+@login_required
+def get_processing_progress(level, extracted_paper_id):
+    """Get the current processing progress for a paper."""
+    if level not in ['high_school', 'university']:
+        return jsonify({'success': False, 'error': 'Invalid level'})
+    
+    # Get extracted paper
+    extracted_paper = ExtractedExamPaper.query.get(extracted_paper_id)
+    if not extracted_paper:
+        return jsonify({'success': False, 'error': 'Processed paper not found'})
+    
+    # Check if user owns the extracted paper
+    if extracted_paper.user_id != current_user.id:
+        return jsonify({'success': False, 'error': 'Permission denied'})
+    
+    return jsonify({
+        'success': True,
+        'status': extracted_paper.status,
+        'progress': extracted_paper.progress,
+        'total_questions': extracted_paper.total_questions,
+        'questions_with_images': extracted_paper.questions_with_images,
+        'completed_at': extracted_paper.completed_at.isoformat() if extracted_paper.completed_at else None
+    })

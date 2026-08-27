@@ -36,7 +36,10 @@ def create_app(config_class=Config):
     
     # Create database tables
     with app.app_context():
-        from app.models import User, Question, QuestionCategory, Document, DocumentCategory
+        from app.models import (
+            User, Question, QuestionCategory, Document, DocumentCategory,
+            ExamPaper, ExtractedExamPaper, ExtractedQuestion, QuestionImage
+        )
         db.create_all()
         
         # Create default admin if not exists
