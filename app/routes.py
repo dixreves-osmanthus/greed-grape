@@ -68,8 +68,7 @@ def questions(level):
     page = request.args.get('page', 1, type=int)
     
     query = Question.query.join(QuestionCategory).filter(
-        QuestionCategory.level == level,
-        QuestionCategory.is_approved == True
+        QuestionCategory.level == level
     )
     
     if category_id:
