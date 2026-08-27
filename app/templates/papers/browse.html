@@ -4,14 +4,6 @@
 
 {% block content %}
 <div class="mb-4">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
-            <li class="breadcrumb-item"><a href="{{ url_for('main.level_home', level=level) }}">{{ level_name }}</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Exam Papers</li>
-        </ol>
-    </nav>
-    
     <h1>
         <i class="fas fa-file-pdf text-danger me-3"></i>
         {{ level_name }} Exam Papers
@@ -20,7 +12,7 @@
 </div>
 
 <!-- Search and Filter -->
-<div class="card shadow mb-4">
+<div class="card mb-4">
     <div class="card-body">
         <form method="GET" action="{{ url_for('main.exam_papers', level=level) }}" class="row g-3">
             <div class="col-md-3">
@@ -64,7 +56,7 @@
     {% if papers.items %}
     {% for paper in papers.items %}
     <div class="col-md-4 mb-4">
-        <div class="card h-100 shadow-sm">
+        <div class="card h-100">
             <div class="card-body">
                 <div class="d-flex justify-content-between mb-2">
                     <span class="badge bg-danger">Exam Paper</span>
@@ -79,13 +71,6 @@
                                 <a class="dropdown-item" href="#">
                                     <i class="fas fa-edit me-2"></i>Edit
                                 </a>
-                            </li>
-                            <li>
-                                <form action="" method="POST">
-                                    <button type="submit" class="dropdown-item text-danger">
-                                        <i class="fas fa-trash me-2"></i>Delete
-                                    </button>
-                                </form>
                             </li>
                         </ul>
                     </div>
@@ -168,11 +153,11 @@
 </div>
 
 {% if current_user.is_authenticated %}
-<div class="card shadow mt-4">
+<div class="card mt-4">
     <div class="card-body text-center">
         <h4>Share Your Exam Papers</h4>
         <p class="mb-4">Help other students by uploading past exam papers.</p>
-        <a href="{{ url_for('upload.upload_paper', level=level) }}" class="btn btn-primary btn-lg">
+        <a href="{{ url_for('upload.upload_paper', level=level) }}" class="btn btn-danger">
             <i class="fas fa-upload me-2"></i>Upload Exam Paper
         </a>
     </div>

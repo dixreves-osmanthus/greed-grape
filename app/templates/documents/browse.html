@@ -4,14 +4,6 @@
 
 {% block content %}
 <div class="mb-4">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
-            <li class="breadcrumb-item"><a href="{{ url_for('main.level_home', level=level) }}">{{ level_name }}</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Documents</li>
-        </ol>
-    </nav>
-    
     <h1>
         <i class="fas fa-file-alt text-warning me-3"></i>
         {{ level_name }} Documents
@@ -20,7 +12,7 @@
 </div>
 
 <!-- Search and Filter -->
-<div class="card shadow mb-4">
+<div class="card mb-4">
     <div class="card-body">
         <form method="GET" action="{{ url_for('main.documents', level=level) }}" class="row g-3">
             <div class="col-md-3">
@@ -72,11 +64,11 @@
     {% if documents.items %}
     {% for document in documents.items %}
     <div class="col-md-4 mb-4">
-        <div class="card h-100 shadow-sm">
+        <div class="card h-100">
             <div class="card-body">
                 <div class="d-flex justify-content-between mb-2">
                     <span class="badge bg-{{ 'primary' if document.file_type == 'essay' else 'warning' }}">
-                        {{ get_document_type_name(document.file_type) }}
+                        {{ document.file_type|title }}
                     </span>
                     {% if current_user.is_authenticated and current_user.is_admin %}
                     <div class="dropdown">
@@ -87,16 +79,9 @@
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li>
                                 <a class="dropdown-item" 
-                                   href="{{ url_for('admin.edit_document', doc_id=document.id) if document.id else '#' }}">
-                                    <i class="fas fa-edit me-2"></i>Edit
+                                   href="{{ url_for('admin.edit_document_category', category_id=document.category_id) }}">
+                                    <i class="fas fa-edit me-2"></i>Edit Category
                                 </a>
-                            </li>
-                            <li>
-                                <form action="" method="POST">
-                                    <button type="submit" class="dropdown-item text-danger">
-                                        <i class="fas fa-trash me-2"></i>Delete
-                                    </button>
-                                </form>
                             </li>
                         </ul>
                     </div>
@@ -188,11 +173,11 @@
 </div>
 
 {% if current_user.is_authenticated %}
-<div class="card shadow mt-4">
+<div class="card mt-4">
     <div class="card-body text-center">
         <h4>Contribute to the Community</h4>
         <p class="mb-4">Share your essays and handouts to help other students.</p>
-        <a href="{{ url_for('upload.upload_document', level=level) }}" class="btn btn-primary btn-lg">
+        <a href="{{ url_for('upload.upload_document', level=level) }}" class="btn btn-primary">
             <i class="fas fa-upload me-2"></i>Upload Document
         </a>
     </div>
