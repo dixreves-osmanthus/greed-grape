@@ -4,15 +4,6 @@
 
 {% block content %}
 <div class="mb-4">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
-            <li class="breadcrumb-item"><a href="{{ url_for('main.level_home', level=level) }}">{{ level_name }}</a></li>
-            <li class="breadcrumb-item"><a href="{{ url_for('upload.upload_center', level=level) }}">Upload Center</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Upload Document</li>
-        </ol>
-    </nav>
-    
     <h1>
         <i class="fas fa-file-upload text-warning me-3"></i>
         Upload Document
@@ -22,7 +13,7 @@
 
 <div class="row">
     <div class="col-md-8">
-        <div class="card shadow">
+        <div class="card">
             <div class="card-body">
                 <form method="POST" action="" enctype="multipart/form-data" class="needs-validation" novalidate>
                     {{ form.hidden_tag() }}
@@ -105,7 +96,7 @@
     </div>
     
     <div class="col-md-4">
-        <div class="card shadow">
+        <div class="card">
             <div class="card-body">
                 <h4 class="card-title">
                     <i class="fas fa-lightbulb text-warning me-2"></i>
