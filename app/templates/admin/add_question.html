@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}Add Question - Admin - StudyHub{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Admin</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('admin.manage_questions') }}">Manage Questions</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Add Question</li>
+        </ol>
+    </nav>
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+            <i class="fas fa-plus-circle text-info me-3"></i>
+            Add Question
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-body">
+                <form method="POST" action="" class="needs-validation" novalidate>
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-4">
+                        <h4>Question Details</h4>
+                        <hr>
+                        
+                        <div class="mb-3">
+                            {{ form.content.label(class="form-label fw-bold") }}
+                            {{ form.content(class="form-control", placeholder="Enter the question content", rows=4) }}
+                            {% for error in form.content.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.category.label(class="form-label") }}
+                            {{ form.category(class="form-select") }}
+                            {% for error in form.category.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                {{ form.marks.label(class="form-label") }}
+                                {{ form.marks(class="form-control") }}
+                                {% for error in form.marks.errors %}
+                                    <div class="text-danger small">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.difficulty.label(class="form-label") }}
+                                {{ form.difficulty(class="form-select") }}
+                                {% for error in form.difficulty.errors %}
+                                    <div class="text-danger small">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h4>Options (for Multiple Choice)</h4>
+                        <hr>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Fill in the options if this is a multiple choice question. 
+                            Leave blank for open-ended questions.
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.option_a.label(class="form-label") }}
+                            {{ form.option_a(class="form-control", placeholder="Option A") }}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.option_b.label(class="form-label") }}
+                            {{ form.option_b(class="form-control", placeholder="Option B") }}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.option_c.label(class="form-label") }}
+                            {{ form.option_c(class="form-control", placeholder="Option C") }}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.option_d.label(class="form-label") }}
+                            {{ form.option_d(class="form-control", placeholder="Option D") }}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.correct_answer.label(class="form-label") }}
+                            {{ form.correct_answer(class="form-select") }}
+                            {% for error in form.correct_answer.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h4>Additional Information</h4>
+                        <hr>
+                        
+                        <div class="mb-3">
+                            {{ form.explanation.label(class="form-label") }}
+                            {{ form.explanation(class="form-control", placeholder="Explanation for the correct answer", rows=3) }}
+                            {% for error in form.explanation.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('admin.manage_questions') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Cancel
+                        </a>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

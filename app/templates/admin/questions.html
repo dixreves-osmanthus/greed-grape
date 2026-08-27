@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Questions - Admin - StudyHub{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Admin</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Manage Questions</li>
+        </ol>
+    </nav>
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+            <i class="fas fa-question-circle text-info me-3"></i>
+            Manage Questions
+        </h1>
+        <a href="{{ url_for('admin.add_question') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Add Question
+        </a>
+    </div>
+    
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <form method="GET" action="" class="row g-3">
+                <div class="col-md-4">
+                    <label for="category" class="form-label">Filter by Category</label>
+                    <select name="category" id="category" class="form-select">
+                        <option value="">All Categories</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if selected_category == cat.id %}selected{% endif %}>
+                            {{ cat.name }} ({{ cat.subject }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter me-2"></i>Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <p class="lead">View and manage all questions in the question bank.</p>
+</div>
+
+{% if questions.items %}
+<div class="card shadow">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Content</th>
+                        <th>Category</th>
+                        <th>Difficulty</th>
+                        <th>Marks</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for question in questions.items %}
+                    <tr>
+                        <td>{{ question.id }}</td>
+                        <td>{{ question.content|truncate(60) }}</td>
+                        <td>{{ question.category.name }}</td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if question.difficulty == 'easy' else 'warning' if question.difficulty == 'medium' else 'danger' }}">
+                                {{ get_difficulty_name(question.difficulty) }}
+                            </span>
+                        </td>
+                        <td>{{ question.marks }}</td>
+                        <td>{{ format_date(question.created_at, '%b %d, %Y') }}</td>
+                        <td>
+                            <a href="{{ url_for('admin.edit_question', question_id=question.id) }}" 
+                               class="btn btn-sm btn-outline-primary me-1">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <form action="{{ url_for('admin.delete_question', question_id=question.id) }}" 
+                                  method="POST" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" 
+                                        onclick="return confirm('Are you sure you want to delete this question?')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if questions.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('admin.manage_questions', page=questions.prev_num, category=selected_category) }}">
+                        Previous
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for page_num in questions.iter_pages() %}
+                    {% if page_num %}
+                    <li class="page-item {% if page_num == questions.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('admin.manage_questions', page=page_num, category=selected_category) }}">
+                            {{ page_num }}
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if questions.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('admin.manage_questions', page=questions.next_num, category=selected_category) }}">
+                        Next
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+{% else %}
+<div class="alert alert-info">
+    <i class="fas fa-info-circle me-2"></i>No questions found.
+</div>
+{% endif %}
+{% endblock %}

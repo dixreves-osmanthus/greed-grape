@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Pending Documents - Admin - StudyHub{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Admin</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Pending Documents</li>
+        </ol>
+    </nav>
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+            <i class="fas fa-clock text-warning me-3"></i>
+            Pending Documents
+        </h1>
+    </div>
+    <p class="lead">Review and approve/reject user-uploaded documents.</p>
+</div>
+
+{% if documents.items %}
+<form method="POST" action="{{ url_for('admin.bulk_approve_documents') }}" class="mb-4">
+    <div class="card shadow">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5>Bulk Actions</h5>
+                <button type="submit" class="btn btn-success btn-sm">
+                    <i class="fas fa-check me-2"></i>Approve Selected
+                </button>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>
+                                <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                            </th>
+                            <th>Title</th>
+                            <th>Type</th>
+                            <th>Category</th>
+                            <th>Uploader</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for doc in documents.items %}
+                        <tr>
+                            <td>
+                                <input type="checkbox" name="doc_ids" value="{{ doc.id }}" class="doc-checkbox">
+                            </td>
+                            <td>{{ doc.title|truncate(40) }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'primary' if doc.file_type == 'essay' else 'warning' }}">
+                                    {{ doc.file_type|title }}
+                                </span>
+                            </td>
+                            <td>{{ doc.doc_category.name }}</td>
+                            <td>{{ doc.uploader.username }}</td>
+                            <td>{{ format_date(doc.created_at) }}</td>
+                            <td>
+                                <form action="{{ url_for('admin.approve_document', doc_id=doc.id) }}" 
+                                      method="POST" class="d-inline me-1">
+                                    <button type="submit" class="btn btn-sm btn-success" 
+                                            onclick="return confirm('Approve this document?')">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                </form>
+                                <form action="{{ url_for('admin.reject_document', doc_id=doc.id) }}" 
+                                      method="POST" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-danger" 
+                                            onclick="return confirm('Reject and delete this document?')">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- Pagination -->
+<nav aria-label="Page navigation" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if documents.has_prev %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for('admin.pending_documents', page=documents.prev_num) }}">
+                Previous
+            </a>
+        </li>
+        {% endif %}
+        
+        {% for page_num in documents.iter_pages() %}
+            {% if page_num %}
+            <li class="page-item {% if page_num == documents.page %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('admin.pending_documents', page=page_num) }}">
+                    {{ page_num }}
+                </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link">...</span></li>
+            {% endif %}
+        {% endfor %}
+        
+        {% if documents.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for('admin.pending_documents', page=documents.next_num) }}">
+                Next
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+
+{% else %}
+<div class="alert alert-success">
+    <i class="fas fa-check-circle me-2"></i>No pending documents! All documents have been reviewed.
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleSelectAll() {
+    const checkboxes = document.querySelectorAll('.doc-checkbox');
+    const selectAll = document.getElementById('selectAll');
+    checkboxes.forEach(cb => cb.checked = selectAll.checked);
+}
+</script>
+{% endblock %}
