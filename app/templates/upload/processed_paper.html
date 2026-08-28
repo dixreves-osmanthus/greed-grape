@@ -478,7 +478,7 @@ $(document).ready(function() {
         btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Saving...');
         
         $.ajax({
-            url: '{{ url_for("upload.update_question_latex", level=level, extracted_paper_id=extracted_paper.id, question_id="__QUESTION_ID__") }}'.replace('__QUESTION_ID__', questionId),
+            url: `/${level}/processed/${extracted_paper.id}/question/${questionId}/update`,
             type: 'POST',
             data: {latex_content: latexContent},
             dataType: 'json',
