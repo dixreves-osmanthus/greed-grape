@@ -74,7 +74,7 @@ def upload_document(level):
             file_type=doc_type,
             category_id=form.category.data,
             user_id=current_user.id,
-            is_approved=False  # Needs admin approval
+            is_approved=False
         )
         
         db.session.add(document)
@@ -126,7 +126,7 @@ def upload_paper(level):
             subject=form.subject.data,
             year=form.year.data,
             user_id=current_user.id,
-            is_approved=False  # Needs admin approval
+            is_approved=False
         )
         
         db.session.add(paper)
@@ -346,11 +346,15 @@ def view_processed_paper(level, paper_id):
             'images': images
         })
     
+    # Get categories for the add to database feature
+    categories = QuestionCategory.query.filter_by(level=level).all()
+    
     return render_template('upload/processed_paper.html',
                          level=level,
                          paper=paper,
                          extracted_paper=extracted_paper,
-                         questions_with_images=questions_with_images)
+                         questions_with_images=questions_with_images,
+                         categories=categories)
 
 
 @upload.route('/<level>/processed/<int:extracted_paper_id>/download-pdf', methods=['GET'])
@@ -500,3 +504,158 @@ def get_processing_progress(level, extracted_paper_id):
         'questions_with_images': extracted_paper.questions_with_images,
         'completed_at': extracted_paper.completed_at.isoformat() if extracted_paper.completed_at else None
     })
+
+
+@upload.route('/<level>/processed/<int:extracted_paper_id>/add-question', methods=['POST'])
+@login_required
+def add_question_to_bank(level, extracted_paper_id):
+    """Add a single extracted question to the question bank."""
+    if level not in ['high_school', 'university']:
+        return jsonify({'success': False, 'error': 'Invalid level'})
+    
+    # Get extracted paper
+    extracted_paper = ExtractedExamPaper.query.get(extracted_paper_id)
+    if not extracted_paper:
+        return jsonify({'success': False, 'error': 'Processed paper not found'})
+    
+    # Check if user owns the extracted paper
+    if extracted_paper.user_id != current_user.id:
+        return jsonify({'success': False, 'error': 'Permission denied'})
+    
+    # Get form data
+    extracted_question_id = request.form.get('extracted_question_id')
+    category_id = request.form.get('category_id')
+    difficulty = request.form.get('difficulty', 'medium')
+    marks = request.form.get('marks', 1, type=int)
+    explanation = request.form.get('explanation', '')
+    correct_answer = request.form.get('correct_answer', '')
+    latex_content = request.form.get('latex_content', '')
+    
+    # Validate required fields
+    if not extracted_question_id or not category_id:
+        return jsonify({'success': False, 'error': 'Missing required fields'})
+    
+    try:
+        # Get the extracted question
+        extracted_question = ExtractedQuestion.query.get(extracted_question_id)
+        if not extracted_question:
+            return jsonify({'success': False, 'error': 'Question not found'})
+        
+        # Get the category
+        category = QuestionCategory.query.get(category_id)
+        if not category:
+            return jsonify({'success': False, 'error': 'Category not found'})
+        
+        # Create new question in the question bank
+        question = Question(
+            content=extracted_question.content,
+            content_latex=latex_content or extracted_question.content_latex or extracted_question.content,
+            option_a=extracted_question.option_a or '',
+            option_b=extracted_question.option_b or '',
+            option_c=extracted_question.option_c or '',
+            option_d=extracted_question.option_d or '',
+            correct_answer=correct_answer,
+            explanation=explanation,
+            marks=marks,
+            difficulty=difficulty,
+            category_id=category_id,
+            user_id=current_user.id
+        )
+        
+        db.session.add(question)
+        db.session.commit()
+        
+        # Mark extracted question as reviewed
+        extracted_question.needs_review = False
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Question added to database successfully',
+            'question_id': question.id
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Error adding question to bank: {e}")
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@upload.route('/<level>/processed/<int:extracted_paper_id>/add-all-questions', methods=['POST'])
+@login_required
+def add_all_questions_to_bank(level, extracted_paper_id):
+    """Add all extracted questions to the question bank."""
+    if level not in ['high_school', 'university']:
+        return jsonify({'success': False, 'error': 'Invalid level'})
+    
+    # Get extracted paper
+    extracted_paper = ExtractedExamPaper.query.get(extracted_paper_id)
+    if not extracted_paper:
+        return jsonify({'success': False, 'error': 'Processed paper not found'})
+    
+    # Check if user owns the extracted paper
+    if extracted_paper.user_id != current_user.id:
+        return jsonify({'success': False, 'error': 'Permission denied'})
+    
+    # Get all extracted questions
+    extracted_questions = ExtractedQuestion.query.filter_by(
+        extracted_paper_id=extracted_paper_id
+    ).all()
+    
+    if not extracted_questions:
+        return jsonify({'success': False, 'error': 'No questions found'})
+    
+    # Get auto-approve flag
+    auto_approve = request.form.get('auto_approve', 'false').lower() == 'true'
+    
+    try:
+        added_count = 0
+        
+        for eq in extracted_questions:
+            # Find the first category for this level
+            category = QuestionCategory.query.filter_by(
+                level=level,
+                subject=extracted_paper.original_paper.subject
+            ).first()
+            
+            # If no category found, use the first available
+            if not category:
+                category = QuestionCategory.query.filter_by(level=level).first()
+            
+            if not category:
+                continue
+            
+            # Create new question
+            question = Question(
+                content=eq.content,
+                content_latex=eq.content_latex or eq.content,
+                option_a=eq.option_a or '',
+                option_b=eq.option_b or '',
+                option_c=eq.option_c or '',
+                option_d=eq.option_d or '',
+                correct_answer=eq.correct_answer or '',
+                explanation=eq.explanation or '',
+                marks=eq.marks or 1,
+                difficulty='medium',
+                category_id=category.id,
+                user_id=current_user.id
+            )
+            
+            db.session.add(question)
+            
+            # Mark as reviewed
+            eq.needs_review = False
+            added_count += 1
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'{added_count} questions added to database',
+            'added_count': added_count
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Error adding all questions to bank: {e}")
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)})

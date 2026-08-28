@@ -40,13 +40,13 @@
 <!-- Tabs for different views -->
 <ul class="nav nav-tabs mb-4" id="paperTabs" role="tablist">
     <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="preview-tab" data-bs-toggle="tab" data-bs-target="#preview" type="button" role="tab">
+        <button class="nav-link" id="preview-tab" data-bs-toggle="tab" data-bs-target="#preview" type="button" role="tab">
             <i class="fas fa-eye me-2"></i>PDF Preview
         </button>
     </li>
     <li class="nav-item" role="presentation">
-        <button class="nav-link" id="questions-tab" data-bs-toggle="tab" data-bs-target="#questions" type="button" role="tab">
-            <i class="fas fa-list me-2"></i>Extracted Questions ({{ extracted_paper.total_questions }})
+        <button class="nav-link active" id="questions-tab" data-bs-toggle="tab" data-bs-target="#questions" type="button" role="tab">
+            <i class="fas fa-list me-2"></i>Review Questions ({{ extracted_paper.total_questions }})
         </button>
     </li>
     <li class="nav-item" role="presentation">
@@ -59,7 +59,7 @@
 <!-- Tab content -->
 <div class="tab-content" id="paperTabsContent">
     <!-- PDF Preview Tab -->
-    <div class="tab-pane fade show active" id="preview" role="tabpanel">
+    <div class="tab-pane fade" id="preview" role="tabpanel">
         <div class="card">
             <div class="card-body">
                 <div class="text-center mb-4">
@@ -92,111 +92,251 @@
         </div>
     </div>
     
-    <!-- Questions Tab -->
-    <div class="tab-pane fade" id="questions" role="tabpanel">
+    <!-- Questions Tab - Question by Question Preview -->
+    <div class="tab-pane fade show active" id="questions" role="tabpanel">
         <div class="card">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h4>Extracted Questions</h4>
-                    <span class="badge bg-info">{{ questions_with_images|length }} Questions</span>
+                    <h4>Review & Add Questions</h4>
+                    <div>
+                        <span id="questionCounter" class="badge bg-info">
+                            Question <span id="currentQuestionNum">1</span> of {{ questions_with_images|length }}
+                        </span>
+                    </div>
                 </div>
                 
-                <div class="accordion" id="questionsAccordion">
+                <!-- Question Navigation -->
+                <div class="mb-4">
+                    <div class="btn-group" role="group">
+                        <button id="prevQuestionBtn" class="btn btn-outline-secondary" disabled>
+                            <i class="fas fa-chevron-left me-1"></i> Previous
+                        </button>
+                        <button id="nextQuestionBtn" class="btn btn-outline-secondary">
+                            Next <i class="fas fa-chevron-right ms-1"></i>
+                        </button>
+                    </div>
+                    <button id="addToDatabaseBtn" class="btn btn-primary ms-2">
+                        <i class="fas fa-plus me-2"></i>Add to Question Bank
+                    </button>
+                    <button id="addAllBtn" class="btn btn-success ms-2">
+                        <i class="fas fa-check-double me-2"></i>Add All to Database
+                    </button>
+                </div>
+                
+                <!-- Question Display Area -->
+                <div id="questionDisplayArea">
                     {% for q_with_img in questions_with_images %}
-                    <div class="accordion-item">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button" type="button" data-bs-toggle="collapse" 
-                                    data-bs-target="#question-{{ q_with_img.question.id }}" 
-                                    aria-expanded="true" aria-controls="question-{{ q_with_img.question.id }}">
-                                <span class="me-3">Question {{ q_with_img.question.question_number or loop.index }}</span>
-                                <span class="badge bg-primary me-2">{{ q_with_img.question.marks or 1 }} mark(s)</span>
-                                {% if q_with_img.images %}
-                                <span class="badge bg-warning text-dark">{{ q_with_img.images|length }} image(s)</span>
-                                {% endif %}
-                            </button>
-                        </h2>
-                        <div id="question-{{ q_with_img.question.id }}" class="accordion-collapse collapse show" 
-                             data-bs-parent="#questionsAccordion">
-                            <div class="accordion-body">
-                                <div class="row">
-                                    <div class="col-md-8">
-                                        <div class="mb-3">
-                                            <h6>Content:</h6>
-                                            <div class="question-content p-3 bg-light rounded">
-                                                {{ q_with_img.question.content }}
-                                            </div>
-                                        </div>
-                                        
-                                        {% if q_with_img.question.option_a %}
-                                        <div class="mb-3">
-                                            <h6>Options:</h6>
-                                            <div class="options-list">
-                                                {% if q_with_img.question.option_a %}
-                                                <div class="option-item mb-2 p-2 bg-light rounded">
-                                                    <strong>a.</strong> {{ q_with_img.question.option_a }}
-                                                </div>
-                                                {% endif %}
-                                                {% if q_with_img.question.option_b %}
-                                                <div class="option-item mb-2 p-2 bg-light rounded">
-                                                    <strong>b.</strong> {{ q_with_img.question.option_b }}
-                                                </div>
-                                                {% endif %}
-                                                {% if q_with_img.question.option_c %}
-                                                <div class="option-item mb-2 p-2 bg-light rounded">
-                                                    <strong>c.</strong> {{ q_with_img.question.option_c }}
-                                                </div>
-                                                {% endif %}
-                                                {% if q_with_img.question.option_d %}
-                                                <div class="option-item mb-2 p-2 bg-light rounded">
-                                                    <strong>d.</strong> {{ q_with_img.question.option_d }}
-                                                </div>
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                        {% endif %}
-                                        
-                                        <div class="mb-3">
-                                            <h6>LaTeX Content:</h6>
-                                            <textarea class="form-control latex-editor" 
-                                                      data-question-id="{{ q_with_img.question.id }}" 
-                                                      rows="4">{{ q_with_img.question.content_latex or q_with_img.question.content }}</textarea>
-                                            <button class="btn btn-sm btn-outline-primary mt-2 update-latex-btn" 
-                                                    data-question-id="{{ q_with_img.question.id }}">
-                                                <i class="fas fa-save me-1"></i>Save LaTeX
-                                            </button>
+                    <div class="question-card d-none" data-question-index="{{ loop.index0 }}">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <!-- Question Preview -->
+                                <div class="question-preview mb-4 p-4 bg-light rounded border">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h5>
+                                            Question {{ q_with_img.question.question_number or loop.index }}
+                                            <span class="badge bg-primary ms-2">{{ q_with_img.question.marks or 1 }} mark(s)</span>
+                                        </h5>
+                                        <div>
+                                            <span class="badge bg-{{ 'success' if q_with_img.question.needs_review == False else 'warning' }}">
+                                                {{ 'Reviewed' if q_with_img.question.needs_review == False else 'Needs Review' }}
+                                            </span>
                                         </div>
                                     </div>
                                     
-                                    <div class="col-md-4">
-                                        {% if q_with_img.images %}
-                                        <h6>Images:</h6>
-                                        <div class="image-gallery">
-                                            {% for img in q_with_img.images %}
-                                            <div class="image-item mb-3">
-                                                <img src="{{ url_for('static', filename='uploads/' + img.file_path) }}" 
-                                                     alt="{{ img.description or 'Question image' }}" 
-                                                     class="img-thumbnail" 
-                                                     style="max-width: 100%; max-height: 200px;">
-                                                <div class="mt-2">
-                                                    <small class="text-muted">
-                                                        {{ img.width }}x{{ img.height }} px, {{ img.file_size }} bytes
-                                                    </small>
-                                                </div>
-                                            </div>
-                                            {% endfor %}
+                                    <!-- Question Content -->
+                                    <div class="mb-3">
+                                        <strong>Content:</strong>
+                                        <div class="mt-2 p-3 bg-white rounded question-content-preview">
+                                            {{ q_with_img.question.content }}
                                         </div>
-                                        {% else %}
-                                        <div class="alert alert-info">
-                                            <i class="fas fa-info-circle me-2"></i>
-                                            No images for this question
-                                        </div>
-                                        {% endif %}
                                     </div>
+                                    
+                                    <!-- Options -->
+                                    {% if q_with_img.question.option_a or q_with_img.question.option_b %}
+                                    <div class="mb-3">
+                                        <strong>Options:</strong>
+                                        <div class="mt-2">
+                                            {% if q_with_img.question.option_a %}
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="correct_answer_{{ q_with_img.question.id }}" 
+                                                       value="a" {% if q_with_img.question.correct_answer == 'a' %}checked{% endif %}>
+                                                <label class="form-check-label">
+                                                    <strong>a.</strong> {{ q_with_img.question.option_a }}
+                                                </label>
+                                            </div>
+                                            {% endif %}
+                                            {% if q_with_img.question.option_b %}
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="correct_answer_{{ q_with_img.question.id }}" 
+                                                       value="b" {% if q_with_img.question.correct_answer == 'b' %}checked{% endif %}>
+                                                <label class="form-check-label">
+                                                    <strong>b.</strong> {{ q_with_img.question.option_b }}
+                                                </label>
+                                            </div>
+                                            {% endif %}
+                                            {% if q_with_img.question.option_c %}
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="correct_answer_{{ q_with_img.question.id }}" 
+                                                       value="c" {% if q_with_img.question.correct_answer == 'c' %}checked{% endif %}>
+                                                <label class="form-check-label">
+                                                    <strong>c.</strong> {{ q_with_img.question.option_c }}
+                                                </label>
+                                            </div>
+                                            {% endif %}
+                                            {% if q_with_img.question.option_d %}
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="correct_answer_{{ q_with_img.question.id }}" 
+                                                       value="d" {% if q_with_img.question.correct_answer == 'd' %}checked{% endif %}>
+                                                <label class="form-check-label">
+                                                    <strong>d.</strong> {{ q_with_img.question.option_d }}
+                                                </label>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <!-- LaTeX Content -->
+                                    <div class="mb-3">
+                                        <strong>LaTeX Content:</strong>
+                                        <textarea class="form-control latex-editor mt-2" 
+                                                  data-question-id="{{ q_with_img.question.id }}" 
+                                                  rows="4">{{ q_with_img.question.content_latex or q_with_img.question.content }}</textarea>
+                                    </div>
+                                    
+                                    <!-- Category Selection for Database -->
+                                    <div class="mb-3">
+                                        <strong>Category:</strong>
+                                        <select class="form-select mt-2" data-question-id="{{ q_with_img.question.id }}">
+                                            <option value="">-- Select Category --</option>
+                                            {% for category in categories %}
+                                            <option value="{{ category.id }}">{{ category.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- Difficulty Selection -->
+                                    <div class="mb-3">
+                                        <strong>Difficulty:</strong>
+                                        <select class="form-select mt-2" data-question-id="{{ q_with_img.question.id }}">
+                                            <option value="easy" {% if q_with_img.question.difficulty == 'easy' %}selected{% endif %}>Easy</option>
+                                            <option value="medium" {% if q_with_img.question.difficulty == 'medium' %}selected{% endif %}>Medium</option>
+                                            <option value="hard" {% if q_with_img.question.difficulty == 'hard' %}selected{% endif %}>Hard</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- Marks -->
+                                    <div class="mb-3">
+                                        <strong>Marks:</strong>
+                                        <input type="number" class="form-control mt-2" 
+                                               data-question-id="{{ q_with_img.question.id }}" 
+                                               value="{{ q_with_img.question.marks or 1 }}" min="1" max="100">
+                                    </div>
+                                    
+                                    <!-- Explanation -->
+                                    <div class="mb-3">
+                                        <strong>Explanation:</strong>
+                                        <textarea class="form-control mt-2" 
+                                                  data-question-id="{{ q_with_img.question.id }}" 
+                                                  rows="3" placeholder="Optional explanation for the answer">{{ q_with_img.question.explanation or '' }}</textarea>
+                                    </div>
+                                    
+                                    <!-- Action Buttons for this question -->
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-sm btn-outline-primary save-latex-btn" 
+                                                data-question-id="{{ q_with_img.question.id }}">
+                                            <i class="fas fa-save me-1"></i>Save LaTeX
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-success add-single-btn" 
+                                                data-question-id="{{ q_with_img.question.id }}" 
+                                                data-question-index="{{ loop.index0 }}">
+                                            <i class="fas fa-plus me-1"></i>Add This Question
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <!-- Image Preview -->
+                                {% if q_with_img.images %}
+                                <div class="image-preview">
+                                    <h6>Images:</h6>
+                                    <div class="image-gallery">
+                                        {% for img in q_with_img.images %}
+                                        <div class="image-item mb-3">
+                                            <img src="{{ url_for('static', filename='uploads/' + img.file_path) }}" 
+                                                 alt="{{ img.description or 'Question image' }}" 
+                                                 class="img-thumbnail" 
+                                                 style="max-width: 100%; max-height: 200px; cursor: pointer;"
+                                                 onclick="openImageModal('{{ url_for('static', filename='uploads/' + img.file_path) }}')">
+                                            <div class="mt-2">
+                                                <small class="text-muted">
+                                                    {{ img.width }}x{{ img.height }} px
+                                                </small>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% else %}
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    No images for this question
+                                </div>
+                                {% endif %}
+                                
+                                <!-- Question Stats -->
+                                <div class="mt-4">
+                                    <h6>Question Info:</h6>
+                                    <ul class="list-group list-group-flush">
+                                        <li class="list-group-item">
+                                            <small><strong>Type:</strong> {{ q_with_img.question.question_type or 'Unknown' }}</small>
+                                        </li>
+                                        <li class="list-group-item">
+                                            <small><strong>Confidence:</strong> {{ (q_with_img.question.confidence_score * 100)|int }}%</small>
+                                        </li>
+                                        <li class="list-group-item">
+                                            <small><strong>Extracted:</strong> {{ q_with_img.question.created_at.strftime('%b %d, %Y') }}</small>
+                                        </li>
+                                    </ul>
                                 </div>
                             </div>
                         </div>
                     </div>
                     {% endfor %}
+                </div>
+                
+                <!-- Success Message Area -->
+                <div id="successMessage" class="alert alert-success d-none mt-4">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <span id="successMessageText"></span>
+                </div>
+                
+                <!-- Add All Modal -->
+                <div class="modal fade" id="addAllModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Add All Questions to Database</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Are you sure you want to add all {{ questions_with_images|length }} questions to the question bank?</p>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="autoApproveAll">
+                                    <label class="form-check-label" for="autoApproveAll">
+                                        Auto-approve all questions (skip admin review)
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-primary" id="confirmAddAllBtn">
+                                    <i class="fas fa-check me-2"></i>Yes, Add All
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -238,11 +378,72 @@
         </div>
     </div>
 </div>
+
+<!-- Image Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Question Image</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalImage" src="" class="img-fluid" style="max-height: 80vh;">
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
 $(document).ready(function() {
+    const questions = {{ questions_with_images|tojson }};
+    let currentQuestionIndex = 0;
+    const totalQuestions = questions.length;
+    
+    // Show first question
+    showQuestion(currentQuestionIndex);
+    
+    // Navigation buttons
+    $('#prevQuestionBtn').click(function() {
+        if (currentQuestionIndex > 0) {
+            currentQuestionIndex--;
+            showQuestion(currentQuestionIndex);
+        }
+    });
+    
+    $('#nextQuestionBtn').click(function() {
+        if (currentQuestionIndex < totalQuestions - 1) {
+            currentQuestionIndex++;
+            showQuestion(currentQuestionIndex);
+        }
+    });
+    
+    function showQuestion(index) {
+        // Hide all questions
+        $('.question-card').addClass('d-none');
+        
+        // Show selected question
+        $(`.question-card[data-question-index="${index}"]`).removeClass('d-none');
+        
+        // Update counter
+        $('#currentQuestionNum').text(index + 1);
+        
+        // Update navigation buttons
+        $('#prevQuestionBtn').prop('disabled', index === 0);
+        $('#nextQuestionBtn').prop('disabled', index === totalQuestions - 1);
+    }
+    
+    // Keyboard navigation
+    $(document).keydown(function(e) {
+        if (e.key === 'ArrowLeft') {
+            $('#prevQuestionBtn').trigger('click');
+        } else if (e.key === 'ArrowRight') {
+            $('#nextQuestionBtn').trigger('click');
+        }
+    });
+    
     // Regenerate PDF button
     $('#regeneratePdfBtn').click(function() {
         const btn = $(this);
@@ -254,8 +455,7 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if (response.success) {
-                    alert('PDF regenerated successfully!');
-                    // Refresh the page to show new PDF
+                    showSuccessMessage('PDF regenerated successfully!');
                     location.reload();
                 } else {
                     alert('Error: ' + response.error);
@@ -269,8 +469,8 @@ $(document).ready(function() {
         });
     });
     
-    // Update LaTeX for a question
-    $('.update-latex-btn').click(function() {
+    // Save LaTeX for a question
+    $('.save-latex-btn').click(function() {
         const btn = $(this);
         const questionId = btn.data('question-id');
         const latexContent = $(`textarea[data-question-id="${questionId}"]`).val();
@@ -284,9 +484,11 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if (response.success) {
-                    btn.prop('disabled', false).html('<i class="fas fa-check me-1"></i>Saved!');
+                    showSuccessMessage('LaTeX saved successfully!');
+                    btn.html('<i class="fas fa-check me-1"></i>Saved!');
                     setTimeout(() => {
                         btn.html('<i class="fas fa-save me-1"></i>Save LaTeX');
+                        btn.prop('disabled', false);
                     }, 1500);
                 } else {
                     alert('Error: ' + response.error);
@@ -296,6 +498,99 @@ $(document).ready(function() {
             error: function(xhr, status, error) {
                 alert('Error saving LaTeX: ' + error);
                 btn.prop('disabled', false).html('<i class="fas fa-save me-1"></i>Save LaTeX');
+            }
+        });
+    });
+    
+    // Add single question to database
+    $('.add-single-btn').click(function() {
+        const btn = $(this);
+        const questionId = btn.data('question-id');
+        const questionIndex = btn.data('question-index');
+        const questionData = questions[questionIndex].question;
+        
+        // Get form values
+        const categoryId = $(`select[data-question-id="${questionId}"]:eq(0)`).val();
+        const difficulty = $(`select[data-question-id="${questionId}"]:eq(1)`).val();
+        const marks = $(`input[data-question-id="${questionId}"]`).val();
+        const explanation = $(`textarea[data-question-id="${questionId}"]:eq(1)`).val();
+        const correctAnswer = $(`input[name="correct_answer_${questionId}"]:checked`).val();
+        const latexContent = $(`textarea[data-question-id="${questionId}"]:eq(0)`).val();
+        
+        if (!categoryId) {
+            alert('Please select a category');
+            return;
+        }
+        
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Adding...');
+        
+        $.ajax({
+            url: '{{ url_for("upload.add_question_to_bank", level=level, extracted_paper_id=extracted_paper.id) }}',
+            type: 'POST',
+            data: {
+                extracted_question_id: questionId,
+                category_id: categoryId,
+                difficulty: difficulty,
+                marks: marks,
+                explanation: explanation,
+                correct_answer: correctAnswer,
+                latex_content: latexContent
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    showSuccessMessage(`Question ${questionIndex + 1} added to database successfully!`);
+                    // Mark as added
+                    btn.html('<i class="fas fa-check me-1"></i>Added!');
+                    btn.removeClass('btn-outline-success').addClass('btn-success');
+                    btn.prop('disabled', true);
+                } else {
+                    alert('Error: ' + response.error);
+                    btn.prop('disabled', false).html('<i class="fas fa-plus me-1"></i>Add This Question');
+                }
+            },
+            error: function(xhr, status, error) {
+                alert('Error adding question: ' + error);
+                btn.prop('disabled', false).html('<i class="fas fa-plus me-1"></i>Add This Question');
+            }
+        });
+    });
+    
+    // Add all questions to database
+    $('#addAllBtn').click(function() {
+        $('#addAllModal').modal('show');
+    });
+    
+    $('#confirmAddAllBtn').click(function() {
+        const autoApprove = $('#autoApproveAll').is(':checked');
+        const btn = $(this);
+        
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Adding...');
+        
+        $.ajax({
+            url: '{{ url_for("upload.add_all_questions_to_bank", level=level, extracted_paper_id=extracted_paper.id) }}',
+            type: 'POST',
+            data: {auto_approve: autoApprove},
+            dataType: 'json',
+            success: function(response) {
+                $('#addAllModal').modal('hide');
+                if (response.success) {
+                    showSuccessMessage(`All ${response.added_count} questions added to database successfully!`);
+                    // Update all add buttons
+                    $('.add-single-btn').each(function() {
+                        $(this).html('<i class="fas fa-check me-1"></i>Added!');
+                        $(this).removeClass('btn-outline-success').addClass('btn-success');
+                        $(this).prop('disabled', true);
+                    });
+                } else {
+                    alert('Error: ' + response.error);
+                }
+                btn.prop('disabled', false).html('<i class="fas fa-check-double me-2"></i>Add All to Database');
+            },
+            error: function(xhr, status, error) {
+                $('#addAllModal').modal('hide');
+                alert('Error adding questions: ' + error);
+                btn.prop('disabled', false).html('<i class="fas fa-check-double me-2"></i>Add All to Database');
             }
         });
     });
@@ -345,10 +640,26 @@ $(document).ready(function() {
         });
     }
     
-    // Start checking progress
     checkProgress();
     {% endif %}
+    
+    // Helper function to show success message
+    function showSuccessMessage(message) {
+        const successDiv = $('#successMessage');
+        $('#successMessageText').text(message);
+        successDiv.removeClass('d-none');
+        
+        setTimeout(() => {
+            successDiv.addClass('d-none');
+        }, 5000);
+    }
 });
+
+// Open image modal
+function openImageModal(imageUrl) {
+    $('#modalImage').attr('src', imageUrl);
+    $('#imageModal').modal('show');
+}
 </script>
 {% endblock %}
 
@@ -371,8 +682,9 @@ $(document).ready(function() {
     overflow-y: auto;
 }
 
-.question-content, .option-item {
+.question-content-preview {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 60px;
 }
 
 .image-gallery .image-item {
@@ -380,15 +692,38 @@ $(document).ready(function() {
     padding: 10px;
     background: #f8f9fa;
     border-radius: 8px;
+    transition: transform 0.2s;
 }
 
-.accordion-button {
-    font-weight: 500;
+.image-gallery .image-item:hover {
+    transform: scale(1.02);
 }
 
-.accordion-button:not(.collapsed) {
-    background-color: #f8f9fa;
-    color: #212529;
+.question-preview {
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.question-preview:hover {
+    border-color: #0d6efd;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 123, 255, 0.25);
+}
+
+.form-check-input {
+    margin-right: 8px;
+}
+
+.form-check-label {
+    cursor: pointer;
+}
+
+#questionCounter {
+    font-size: 1.1em;
+}
+
+.btn-group {
+    margin-right: 10px;
 }
 </style>
 {% endblock %}
