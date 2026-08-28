@@ -284,8 +284,11 @@ def start_processing(level, paper_id):
         return jsonify({'success': False, 'error': 'Already processed'})
     
     try:
-        # Initialize processor
-        processor = PaperProcessor(current_app.config['UPLOAD_FOLDER'])
+        # Initialize processor with Mistral API key
+        processor = PaperProcessor(
+            current_app.config['UPLOAD_FOLDER'],
+            current_app.config.get('MISTRAL_API_KEY')
+        )
         
         # Process the paper (this will create the extracted paper record)
         success, result = processor.process_paper(paper_id, current_user.id)
@@ -414,8 +417,11 @@ def regenerate_pdf(level, extracted_paper_id):
         return jsonify({'success': False, 'error': 'Permission denied'})
     
     try:
-        # Initialize processor
-        processor = PaperProcessor(current_app.config['UPLOAD_FOLDER'])
+        # Initialize processor with Mistral API key
+        processor = PaperProcessor(
+            current_app.config['UPLOAD_FOLDER'],
+            current_app.config.get('MISTRAL_API_KEY')
+        )
         
         # Regenerate PDF
         success = processor.regenerate_pdf(extracted_paper_id)

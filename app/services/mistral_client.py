@@ -51,11 +51,15 @@ class MistralClient:
         
         url = f"{self.API_BASE_URL}/{endpoint}"
         try:
+            logger.info(f"Making Mistral API request to {endpoint}")
             response = self.session.post(url, json=data, timeout=timeout)
             response.raise_for_status()
-            return response.json()
+            result = response.json()
+            logger.info(f"Mistral API response received for {endpoint}")
+            return result
         except requests.exceptions.RequestException as e:
-            logger.error(f"Mistral API request failed: {e}")
+            logger.error(f"Mistral API request failed for {endpoint}: {e}")
+            logger.error(f"Request data: {data}")
             return None
     
     def extract_text_from_pdf(self, pdf_path: str) -> Optional[str]:
