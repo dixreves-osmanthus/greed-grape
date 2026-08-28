@@ -9,7 +9,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = os.environ.get('SQLALCHEMY_TRACK_MODIFICATIONS', 'False').lower() == 'true'
     
     # Mistral API configuration
-    MISTRAL_API_KEY = os.environ.get('MISTRAL_API_KEY')
+    MISTRAL_API_KEY = os.environ.get('MISTRAL_API_KEY') or 'zb87mB47OJCVnZqSYASDu17vQp2zskH9'
     MISTRAL_API_URL = os.environ.get('MISTRAL_API_URL') or 'https://api.mistral.ai/v1'
     
     # Upload configuration
