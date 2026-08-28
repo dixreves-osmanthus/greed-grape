@@ -301,9 +301,12 @@ class PaperProcessor:
         
         if text_nearby:
             # Look for question number patterns
-            q_match = re.search(r'(?:Question|Q|q\.?|\d+\.)\s*(\d+)', text_nearby)
+            q_match = re.search(r'(?:Question|Q|q)\s*(\d+)|(\d+)[\.\)]\s*', text_nearby)
             if q_match:
-                return q_match.group(1)
+                # Get the first non-None group
+                question_num = q_match.group(1) or q_match.group(2)
+                if question_num:
+                    return question_num
         
         # Default: return page number as fallback
         return f"page_{page_num + 1}"
